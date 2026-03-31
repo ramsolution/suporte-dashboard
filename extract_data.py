@@ -83,11 +83,10 @@ def extract_all():
         "csat_distribuicao")
     data["csat_dist"] = [{"r": r[0], "t": r[1]} for r in rows]
 
-    # ── 3. Eventos de tempo diarios por agente ──────────────────────────────
-    # NOTA: first_response com user_id IS NULL ou user_id = 1 = bot Chatwoot (AgentBot).
-    # Esses eventos são excluídos para que o TFR reflita apenas respostas humanas.
-    print("> Extraindo eventos de tempo diarios (excluindo first_response do bot)...")
-    rows = fetchall(cur, """
+    # ── 3a. TMR (conversation_resolved) — via reporting_events ─────────────
+    # TMR é confiável em reporting_events pois resolução sempre tem user_id humano.
+    print("> Extraindo TMR diario (reporting_events)...")
+    rows_tmr = fetchall(cur, """
         SELECT TO_CHAR(re.created_at, 'YYYY-MM-DD') as dia,
                COALESCE(u.name, 'N/A') as agente,
                re.name as evento,
@@ -95,9 +94,40 @@ def extract_all():
                COUNT(*) as total
         FROM reporting_events re
         LEFT JOIN users u ON re.user_id=u.id
-        WHERE NOT (re.name = 'first_response' AND (re.user_id IS NULL OR re.user_id = 1))
-        GROUP BY dia, agente, evento ORDER BY dia
-    """)
+        WHERE re.name = 'conversation_resolved'
+        GROUP BY dia, agente, re.name ORDER BY dia
+    """, "tmr_diario")
+
+    # ── 3b. TFR (first_response) — calculado direto da tabela messages ─────
+    # reporting_events.first_response é one-shot: se o bot responde primeiro,
+    # o evento já foi gravado com valor baixo e o agente humano não gera novo.
+    # Solução: buscar a primeira mensagem outgoing com sender_type='User' por
+    # conversa, medindo o tempo real de resposta humana desde a criação.
+    print("> Extraindo TFR diario (primeira resposta humana via messages)...")
+    rows_tfr = fetchall(cur, """
+        SELECT TO_CHAR(c.created_at, 'YYYY-MM-DD') as dia,
+               COALESCE(u.name, 'N/A') as agente,
+               'first_response' as evento,
+               ROUND(AVG(
+                   EXTRACT(EPOCH FROM (fh.created_at - c.created_at))
+               )::numeric,0) as avg_sec,
+               COUNT(*) as total
+        FROM conversations c
+        JOIN LATERAL (
+            SELECT m.created_at, m.sender_id
+            FROM messages m
+            WHERE m.conversation_id = c.id
+              AND m.message_type = 1
+              AND m.sender_type = 'User'
+            ORDER BY m.created_at ASC
+            LIMIT 1
+        ) fh ON true
+        LEFT JOIN users u ON fh.sender_id = u.id
+        GROUP BY TO_CHAR(c.created_at, 'YYYY-MM-DD'), u.name
+        ORDER BY dia
+    """, "tfr_diario_humano")
+
+    rows = rows_tmr + rows_tfr
     data["eventos_por_dia"] = [
         {"d": r[0], "ag": r[1], "ev": r[2], "s": float(r[3]), "t": r[4]}
         for r in rows
@@ -159,16 +189,25 @@ def extract_all():
     mt = {0:"incoming", 1:"outgoing", 2:"activity", 3:"template"}
     data["msg_tipos"] = {mt.get(r[0], str(r[0])): r[1] for r in rows}
 
-    # ── 8. Contagem de first_response ignorados do bot (auditoria) ──────────
-    print("> Auditando first_response do bot...")
+    # ── 8. Auditoria TFR: conversas com bot como primeiro respondente ────────
+    # Conta conversas onde o bot (sender_type != 'User') respondeu antes do humano.
+    print("> Auditando conversas com bot respondendo primeiro...")
     rows = fetchall(cur, """
-        SELECT COUNT(*) as total
-        FROM reporting_events
-        WHERE name = 'first_response' AND (user_id IS NULL OR user_id = 1)
+        SELECT COUNT(DISTINCT c.id) as total
+        FROM conversations c
+        JOIN LATERAL (
+            SELECT m.sender_type
+            FROM messages m
+            WHERE m.conversation_id = c.id
+              AND m.message_type = 1
+            ORDER BY m.created_at ASC
+            LIMIT 1
+        ) first_msg ON true
+        WHERE first_msg.sender_type != 'User'
     """, "bot_first_response_audit")
     data["bot_first_response_ignorados"] = rows[0][0] if rows else 0
     if data["bot_first_response_ignorados"] > 0:
-        print(f"   [INFO] {data['bot_first_response_ignorados']} first_response do bot ignorados no TFR")
+        print(f"   [INFO] {data['bot_first_response_ignorados']} conversas com bot como primeiro respondente (TFR medido a partir do humano)")
 
     # ── 9. Configuracao SLA (exportada para o dashboard) ────────────────────
     data["sla_config"] = {
