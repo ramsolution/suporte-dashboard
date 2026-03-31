@@ -116,9 +116,9 @@ def extract_all():
         JOIN LATERAL (
             SELECT m.created_at, m.sender_id
             FROM messages m
+            INNER JOIN users u2 ON u2.id = m.sender_id
             WHERE m.conversation_id = c.id
               AND m.message_type = 1
-              AND m.sender_type = 'User'
             ORDER BY m.created_at ASC
             LIMIT 1
         ) fh ON true
