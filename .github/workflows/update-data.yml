@@ -1,0 +1,43 @@
+name: Atualizar Dados do Dashboard
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'  # a cada 15 minutos automaticamente
+  workflow_dispatch:          # permite rodar manualmente pelo GitHub UI
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependências
+        run: pip install psycopg2-binary
+
+      - name: Extrair dados do Chatwoot
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASS: ${{ secrets.DB_PASS }}
+        run: python extract_data.py
+
+      - name: Commitar e publicar dados atualizados
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data.js
+          git diff --staged --quiet && echo "Sem mudancas" || (
+            git commit -m "chore: atualiza dados do dashboard $(date +'%d/%m/%Y %H:%M') [skip ci]"
+            git push
+          )

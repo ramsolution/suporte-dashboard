@@ -1,958 +1,724 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Dashboard de Suporte — Sistema RAM</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
   <script src="data.js"></script>
   <style>
-    :root {
-      --bg: #0f1117; --card: #1a1d2e; --card2: #222540; --border: #2d3158;
-      --text: #e2e8f0; --text2: #94a3b8;
-      --blue: #4f8ef7; --green: #22d3a0; --yellow: #fbbf24; --red: #f87171;
-      --purple: #a78bfa; --orange: #fb923c; --teal: #2dd4bf;
+    :root{
+      --bg:#0f1117;--card:#161926;--card2:#1e2235;--border:#272c47;
+      --text:#dde3f0;--text2:#7b8bb2;--text3:#a0aec0;
+      --blue:#4f8ef7;--green:#22c98a;--yellow:#f5a623;--red:#e05c5c;
+      --purple:#9b7df8;--orange:#f07840;--teal:#26c6c6;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;line-height:1.4}
 
-    /* HEADER */
-    header { background: linear-gradient(135deg,#1e2a4a,#1a1d2e); border-bottom: 1px solid var(--border); padding: 16px 28px; display: flex; align-items: center; justify-content: space-between; }
-    .header-left { display: flex; align-items: center; gap: 14px; }
-    .logo { width: 40px; height: 40px; background: var(--blue); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
-    .header-title h1 { font-size: 18px; font-weight: 700; }
-    .header-title p { font-size: 11px; color: var(--text2); margin-top: 2px; }
-    .header-right { display: flex; gap: 10px; align-items: center; }
-    .live-badge { background:#1e3a2f; border:1px solid var(--green); color:var(--green); padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
-    #update-time { font-size:11px; color:var(--text2); }
+    /* ── HEADER ── */
+    header{
+      background:linear-gradient(135deg,#162040 0%,#161926 100%);
+      border-bottom:1px solid var(--border);
+      padding:12px 24px;display:flex;align-items:center;justify-content:space-between;
+    }
+    .hd-left{display:flex;align-items:center;gap:12px}
+    .hd-logo{width:34px;height:34px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+    .hd-title h1{font-size:15px;font-weight:700;letter-spacing:-0.01em}
+    .hd-title p{font-size:11px;color:var(--text2);margin-top:1px}
+    .hd-right{display:flex;align-items:center;gap:10px}
+    .live{background:#0d2b20;border:1px solid var(--green);color:var(--green);padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:0.05em}
+    #uptime{font-size:10px;color:var(--text2)}
 
-    /* FILTROS */
-    .filter-bar { background: var(--card); border-bottom: 1px solid var(--border); padding: 12px 28px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-    .filter-label { font-size: 12px; color: var(--text2); font-weight: 600; white-space: nowrap; }
-    .quick-btns { display: flex; gap: 6px; flex-wrap: wrap; }
-    .qbtn { background: var(--card2); border: 1px solid var(--border); color: var(--text2); padding: 5px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
-    .qbtn:hover { border-color: var(--blue); color: var(--text); }
-    .qbtn.active { background: rgba(79,142,247,0.15); border-color: var(--blue); color: var(--blue); font-weight: 600; }
-    .date-sep { color: var(--border); font-size: 18px; }
-    .date-inputs { display: flex; align-items: center; gap: 8px; }
-    .date-input { background: var(--card2); border: 1px solid var(--border); color: var(--text); padding: 5px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; }
-    .date-input:focus { outline: none; border-color: var(--blue); }
-    .apply-btn { background: var(--blue); color: #fff; border: none; padding: 5px 16px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
-    .apply-btn:hover { opacity: 0.85; }
-    .period-display { margin-left: auto; font-size: 11px; color: var(--text2); background: var(--card2); padding: 4px 12px; border-radius: 20px; border: 1px solid var(--border); white-space: nowrap; }
+    /* ── FILTER BAR ── */
+    .fbar{
+      background:var(--card);border-bottom:1px solid var(--border);
+      padding:8px 24px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    }
+    .flabel{font-size:11px;color:var(--text2);font-weight:600;white-space:nowrap}
+    .qbtns{display:flex;gap:4px;flex-wrap:wrap}
+    .qb{
+      background:var(--card2);border:1px solid var(--border);color:var(--text2);
+      padding:4px 10px;border-radius:5px;font-size:11px;cursor:pointer;
+      transition:all .15s;white-space:nowrap;line-height:1.4;
+    }
+    .qb:hover{border-color:var(--blue);color:var(--text)}
+    .qb.on{background:rgba(79,142,247,.12);border-color:var(--blue);color:var(--blue);font-weight:600}
+    .fsep{color:var(--border);font-size:16px;margin:0 2px}
+    .dinputs{display:flex;align-items:center;gap:6px}
+    .dinput{
+      background:var(--card2);border:1px solid var(--border);color:var(--text);
+      padding:4px 8px;border-radius:5px;font-size:11px;cursor:pointer;width:120px;
+    }
+    .dinput:focus{outline:none;border-color:var(--blue)}
+    .abtn{
+      background:var(--blue);color:#fff;border:none;
+      padding:4px 14px;border-radius:5px;font-size:11px;font-weight:600;
+      cursor:pointer;transition:opacity .15s;
+    }
+    .abtn:hover{opacity:.85}
+    .pdisplay{
+      margin-left:auto;font-size:10px;color:var(--text2);
+      background:var(--card2);padding:3px 10px;border-radius:14px;
+      border:1px solid var(--border);white-space:nowrap;
+    }
 
-    /* TABS NAV */
-    nav { background: var(--card); border-bottom: 1px solid var(--border); padding: 0 28px; display: flex; overflow-x: auto; }
-    .tab { padding: 13px 18px; cursor: pointer; font-size: 13px; color: var(--text2); border-bottom: 2px solid transparent; transition: all 0.2s; user-select: none; white-space: nowrap; }
-    .tab:hover { color: var(--text); }
-    .tab.active { color: var(--blue); border-bottom-color: var(--blue); font-weight: 600; }
+    /* ── TABS ── */
+    nav{
+      background:var(--card);border-bottom:1px solid var(--border);
+      padding:0 24px;display:flex;overflow-x:auto;
+    }
+    nav::-webkit-scrollbar{height:2px}
+    nav::-webkit-scrollbar-thumb{background:var(--border)}
+    .tab{
+      padding:10px 16px;cursor:pointer;font-size:12px;font-weight:500;
+      color:var(--text2);border-bottom:2px solid transparent;
+      transition:all .18s;white-space:nowrap;user-select:none;
+    }
+    .tab:hover{color:var(--text)}
+    .tab.on{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
 
-    /* PAGES */
-    .page { display: none; padding: 24px 28px; }
-    .page.active { display: block; }
+    /* ── PAGES ── */
+    .page{display:none;padding:18px 24px}
+    .page.on{display:block}
 
-    /* KPI CARDS */
-    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; margin-bottom: 24px; }
-    .kpi-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; position: relative; overflow: hidden; }
-    .kpi-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
-    .kpi-card.blue::before{background:var(--blue)} .kpi-card.green::before{background:var(--green)}
-    .kpi-card.yellow::before{background:var(--yellow)} .kpi-card.red::before{background:var(--red)}
-    .kpi-card.purple::before{background:var(--purple)} .kpi-card.orange::before{background:var(--orange)}
-    .kpi-card.teal::before{background:var(--teal)}
-    .kpi-label { font-size:11px; color:var(--text2); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; }
-    .kpi-value { font-size:28px; font-weight:700; margin:6px 0 3px; line-height:1; }
-    .kpi-sub { font-size:11px; color:var(--text2); }
-    .kpi-badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:600; margin-top:6px; }
-    .kpi-badge.up{background:#1e3a2f;color:var(--green)} .kpi-badge.down{background:#3a1e1e;color:var(--red)} .kpi-badge.neutral{background:#2a2a1e;color:var(--yellow)}
+    /* ── SECTION TITLE ── */
+    .stitle{font-size:14px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+    .stitle span{font-size:11px;color:var(--text2);font-weight:400}
 
-    /* CHARTS */
-    .charts-grid { display:grid; gap:18px; }
-    .grid-2{grid-template-columns:1fr 1fr} .grid-3{grid-template-columns:1fr 1fr 1fr}
-    .grid-1-2{grid-template-columns:1fr 2fr} .grid-2-1{grid-template-columns:2fr 1fr}
-    .chart-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px; }
-    .chart-card.wide { grid-column:1/-1; }
-    .chart-title { font-size:13px; font-weight:600; margin-bottom:14px; }
-    .chart-title span { color:var(--text2); font-weight:400; font-size:11px; margin-left:6px; }
+    /* ── KPI ROW ── */
+    .kpi-row{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+    .kc{
+      background:var(--card);border:1px solid var(--border);border-radius:8px;
+      padding:12px 14px;flex:1;min-width:130px;position:relative;overflow:hidden;
+    }
+    .kc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+    .kc.bl::before{background:var(--blue)}.kc.gr::before{background:var(--green)}
+    .kc.ye::before{background:var(--yellow)}.kc.re::before{background:var(--red)}
+    .kc.pu::before{background:var(--purple)}.kc.or::before{background:var(--orange)}
+    .kc.te::before{background:var(--teal)}
+    .kl{font-size:10px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+    .kv{font-size:24px;font-weight:700;margin:4px 0 2px;line-height:1}
+    .ks{font-size:10px;color:var(--text2)}
+    .kb{display:inline-block;padding:1px 7px;border-radius:8px;font-size:9px;font-weight:700;margin-top:4px;letter-spacing:.02em}
+    .kb.up{background:#0d2b20;color:var(--green)}
+    .kb.dn{background:#2b0d0d;color:var(--red)}
+    .kb.nt{background:#2b250d;color:var(--yellow)}
 
-    /* TABLE */
-    .data-table { width:100%; border-collapse:collapse; }
-    .data-table th { font-size:11px; color:var(--text2); text-transform:uppercase; letter-spacing:0.04em; padding:8px 10px; border-bottom:1px solid var(--border); text-align:left; }
-    .data-table td { padding:9px 10px; border-bottom:1px solid rgba(45,49,88,0.4); font-size:13px; }
-    .data-table tr:last-child td { border-bottom:none; }
-    .data-table tr:hover td { background:rgba(79,142,247,0.04); }
-    .badge-g{background:#1e3a2f;color:var(--green);padding:2px 10px;border-radius:10px;font-size:11px}
-    .badge-y{background:#3a2f1e;color:var(--yellow);padding:2px 10px;border-radius:10px;font-size:11px}
-    .badge-r{background:#3a1e1e;color:var(--red);padding:2px 10px;border-radius:10px;font-size:11px}
-    .stars{color:var(--yellow)}
+    /* ── GRID LAYOUTS ── */
+    .grid{display:grid;gap:12px;margin-bottom:14px}
+    .g2{grid-template-columns:1fr 1fr}
+    .g3{grid-template-columns:1fr 1fr 1fr}
+    .g4{grid-template-columns:1fr 1fr 1fr 1fr}
+    .g21{grid-template-columns:2fr 1fr}
+    .g12{grid-template-columns:1fr 2fr}
+    .gw{grid-column:1/-1}
 
-    .progress-bar{background:var(--border);border-radius:4px;height:5px;margin-top:4px}
-    .progress-fill{height:5px;border-radius:4px}
+    /* ── CHART CARD ── */
+    .cc{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px}
+    .ct{font-size:12px;font-weight:600;margin-bottom:10px;color:var(--text)}
+    .ct span{color:var(--text2);font-weight:400;font-size:10px;margin-left:6px}
 
-    .alert{background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.3);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px}
+    /* ── TABLE ── */
+    .dt{width:100%;border-collapse:collapse}
+    .dt th{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;padding:6px 8px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
+    .dt td{padding:7px 8px;border-bottom:1px solid rgba(39,44,71,.5);font-size:12px}
+    .dt tr:last-child td{border-bottom:none}
+    .dt tr:hover td{background:rgba(79,142,247,.04)}
+    .bg{background:#0d2b20;color:var(--green);padding:1px 8px;border-radius:8px;font-size:10px;font-weight:600}
+    .by{background:#2b1d0d;color:var(--yellow);padding:1px 8px;border-radius:8px;font-size:10px;font-weight:600}
+    .br{background:#2b0d0d;color:var(--red);padding:1px 8px;border-radius:8px;font-size:10px;font-weight:600}
+    .star{color:var(--yellow);font-size:11px}
+
+    /* ── PROGRESS ── */
+    .pb{background:var(--border);border-radius:3px;height:4px;margin-top:3px}
+    .pf{height:4px;border-radius:3px}
+
+    /* ── ALERTS ── */
+    .alert{background:rgba(224,92,92,.07);border:1px solid rgba(224,92,92,.3);border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:12px}
     .alert strong{color:var(--red)}
-    .info-box{background:rgba(79,142,247,0.08);border:1px solid rgba(79,142,247,0.3);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px}
-    .info-box strong{color:var(--blue)}
-    .section-title{font-size:16px;font-weight:700;margin-bottom:18px}
-    .section-title span{color:var(--text2);font-size:12px;font-weight:400;margin-left:8px}
+    .info{background:rgba(79,142,247,.07);border:1px solid rgba(79,142,247,.3);border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:12px}
+    .info strong{color:var(--blue)}
 
-    .no-data{text-align:center;padding:40px;color:var(--text2);font-size:13px}
-
-    @media(max-width:900px){
-      .grid-2,.grid-3,.grid-1-2,.grid-2-1{grid-template-columns:1fr}
-      .page{padding:14px}
-      .filter-bar{padding:10px 14px}
-    }
+    /* ── RESPONSIVE ── */
+    @media(max-width:1100px){.g3{grid-template-columns:1fr 1fr}.g4{grid-template-columns:1fr 1fr}}
+    @media(max-width:700px){.g2,.g3,.g4,.g21,.g12{grid-template-columns:1fr}.page{padding:12px}.fbar{padding:8px 12px}}
   </style>
 </head>
 <body>
 
+<!-- HEADER -->
 <header>
-  <div class="header-left">
-    <div class="logo">📊</div>
-    <div class="header-title">
+  <div class="hd-left">
+    <div class="hd-logo">📊</div>
+    <div class="hd-title">
       <h1>Dashboard de Suporte — Sistema RAM</h1>
-      <p>Chatwoot · chat.ramnuvem.com · Análise de Atendimento</p>
+      <p>Chatwoot · chat.ramnuvem.com · Atualização automática a cada 15 min</p>
     </div>
   </div>
-  <div class="header-right">
-    <div class="live-badge">● AO VIVO</div>
-    <div id="update-time">—</div>
+  <div class="hd-right">
+    <div class="live">● AO VIVO</div>
+    <div id="uptime">—</div>
   </div>
 </header>
 
-<!-- BARRA DE FILTROS -->
-<div class="filter-bar">
-  <span class="filter-label">Período:</span>
-  <div class="quick-btns">
-    <button class="qbtn" onclick="quickFilter('week')">Esta semana</button>
-    <button class="qbtn" onclick="quickFilter('lastweek')">Semana anterior</button>
-    <button class="qbtn" onclick="quickFilter('month')">Este mês</button>
-    <button class="qbtn active" onclick="quickFilter('lastmonth')">Mês anterior</button>
-    <button class="qbtn" onclick="quickFilter('3months')">Últimos 3 meses</button>
-    <button class="qbtn" onclick="quickFilter('all')">Todo período</button>
+<!-- FILTROS -->
+<div class="fbar">
+  <span class="flabel">Período:</span>
+  <div class="qbtns">
+    <button class="qb" data-f="week"     onclick="qf(this,'week')">Esta semana</button>
+    <button class="qb" data-f="lastweek" onclick="qf(this,'lastweek')">Semana anterior</button>
+    <button class="qb" data-f="month"    onclick="qf(this,'month')">Este mês</button>
+    <button class="qb on" data-f="lastmonth" onclick="qf(this,'lastmonth')">Mês anterior</button>
+    <button class="qb" data-f="3m"       onclick="qf(this,'3m')">Últimos 3 meses</button>
+    <button class="qb" data-f="all"      onclick="qf(this,'all')">Todo período</button>
   </div>
-  <span class="date-sep">|</span>
-  <div class="date-inputs">
-    <span class="filter-label">De:</span>
-    <input type="date" id="dt-start" class="date-input">
-    <span class="filter-label">Até:</span>
-    <input type="date" id="dt-end" class="date-input">
-    <button class="apply-btn" onclick="applyCustomFilter()">Aplicar</button>
+  <span class="fsep">|</span>
+  <div class="dinputs">
+    <span class="flabel">De:</span>
+    <input type="date" id="d0" class="dinput">
+    <span class="flabel">Até:</span>
+    <input type="date" id="d1" class="dinput">
+    <button class="abtn" onclick="applyCustom()">Aplicar</button>
   </div>
-  <div class="period-display" id="period-display">—</div>
+  <div class="pdisplay" id="pdis">—</div>
 </div>
 
+<!-- TABS -->
 <nav>
-  <div class="tab active" onclick="showPage('visao-geral',this)">Visão Geral</div>
-  <div class="tab" onclick="showPage('agentes',this)">Agentes</div>
-  <div class="tab" onclick="showPage('csat',this)">CSAT</div>
-  <div class="tab" onclick="showPage('categorias',this)">Categorias</div>
-  <div class="tab" onclick="showPage('padroes',this)">Padrões de Demanda</div>
-  <div class="tab" onclick="showPage('sla',this)">SLA & Tempos</div>
+  <div class="tab on"  onclick="pg('geral',this)">Visão Geral</div>
+  <div class="tab"     onclick="pg('agentes',this)">Agentes</div>
+  <div class="tab"     onclick="pg('csat',this)">CSAT</div>
+  <div class="tab"     onclick="pg('cats',this)">Categorias</div>
+  <div class="tab"     onclick="pg('padroes',this)">Padrões</div>
+  <div class="tab"     onclick="pg('sla',this)">SLA & Tempos</div>
 </nav>
 
-<!-- VISÃO GERAL -->
-<div class="page active" id="page-visao-geral">
-  <div class="section-title">Visão Geral <span id="vg-period-sub"></span></div>
-  <div class="kpi-grid" id="kpi-geral"></div>
-  <div class="charts-grid grid-2-1" style="margin-bottom:18px">
-    <div class="chart-card"><div class="chart-title">Conversas por Período <span id="lbl-mes-ou-semana"></span></div><canvas id="chart-volume" height="210"></canvas></div>
-    <div class="chart-card"><div class="chart-title">Status das Conversas</div><canvas id="chart-status" height="210"></canvas></div>
+<!-- ════════ VISÃO GERAL ════════ -->
+<div class="page on" id="page-geral">
+  <div class="stitle">Visão Geral <span id="sg"></span></div>
+  <div class="kpi-row" id="kr-geral"></div>
+  <div class="grid g3">
+    <div class="cc gw" style="grid-column:span 2">
+      <div class="ct">Volume <span id="lbl-vol"></span></div>
+      <canvas id="cv" height="140"></canvas>
+    </div>
+    <div class="cc">
+      <div class="ct">Status</div>
+      <canvas id="cs" height="140"></canvas>
+    </div>
   </div>
-  <div class="charts-grid grid-2" style="margin-bottom:18px">
-    <div class="chart-card"><div class="chart-title">Volume por Agente</div><canvas id="chart-agente-vol" height="230"></canvas></div>
-    <div class="chart-card"><div class="chart-title">Tipo de Mensagens <span>Distribuição geral</span></div><canvas id="chart-msg-tipo" height="230"></canvas></div>
-  </div>
-  <div class="chart-card">
-    <div class="chart-title">Conversas por Equipe</div>
-    <table class="data-table" id="tbl-equipe"></table>
+  <div class="grid g3">
+    <div class="cc">
+      <div class="ct">Volume por Agente</div>
+      <canvas id="cav" height="150"></canvas>
+    </div>
+    <div class="cc">
+      <div class="ct">Tipo de Mensagens</div>
+      <canvas id="cmt" height="150"></canvas>
+    </div>
+    <div class="cc">
+      <div class="ct">Equipes</div>
+      <table class="dt" id="teq" style="margin-top:2px"></table>
+    </div>
   </div>
 </div>
 
-<!-- AGENTES -->
+<!-- ════════ AGENTES ════════ -->
 <div class="page" id="page-agentes">
-  <div class="section-title">Performance por Agente <span id="ag-period-sub"></span></div>
-  <div id="alert-nao-atrib" class="alert" style="display:none"></div>
-  <div class="chart-card" style="margin-bottom:18px">
-    <div class="chart-title">Ranking de Agentes — Indicadores do Período</div>
-    <table class="data-table" id="tbl-agentes-ranking"></table>
+  <div class="stitle">Agentes <span id="sag"></span></div>
+  <div id="al-nao" class="alert" style="display:none"></div>
+  <div class="cc" style="margin-bottom:14px">
+    <div class="ct">Ranking do Período</div>
+    <table class="dt" id="trank"></table>
   </div>
-  <div class="charts-grid grid-2" style="margin-bottom:18px">
-    <div class="chart-card"><div class="chart-title">Volume por Agente</div><canvas id="chart-ag-bar" height="260"></canvas></div>
-    <div class="chart-card"><div class="chart-title">TMR por Agente vs Meta <span>em horas · meta: 24h</span></div><canvas id="chart-tmr" height="260"></canvas></div>
-  </div>
-  <div class="charts-grid grid-2">
-    <div class="chart-card"><div class="chart-title">Primeira Resposta por Agente <span>em minutos · meta: 30min</span></div><canvas id="chart-tfr" height="240"></canvas></div>
-    <div class="chart-card"><div class="chart-title">CSAT por Agente <span>nota média</span></div><canvas id="chart-csat-ag" height="240"></canvas></div>
+  <div class="grid g4">
+    <div class="cc">
+      <div class="ct">Volume</div>
+      <canvas id="cagv" height="160"></canvas>
+    </div>
+    <div class="cc">
+      <div class="ct">TMR <span>vs meta 24h</span></div>
+      <canvas id="ctmr" height="160"></canvas>
+    </div>
+    <div class="cc">
+      <div class="ct">TFR <span>vs meta 30min</span></div>
+      <canvas id="ctfr" height="160"></canvas>
+    </div>
+    <div class="cc">
+      <div class="ct">CSAT por Agente</div>
+      <canvas id="ccag" height="160"></canvas>
+    </div>
   </div>
 </div>
 
-<!-- CSAT -->
+<!-- ════════ CSAT ════════ -->
 <div class="page" id="page-csat">
-  <div class="section-title">Satisfação do Cliente (CSAT) <span id="csat-period-sub"></span></div>
-  <div class="kpi-grid" id="kpi-csat"></div>
-  <div class="charts-grid grid-2" style="margin-bottom:18px">
-    <div class="chart-card"><div class="chart-title">Distribuição de Notas CSAT</div><canvas id="chart-csat-dist" height="250"></canvas></div>
-    <div class="chart-card"><div class="chart-title">Evolução do CSAT <span id="lbl-csat-evolucao"></span></div><canvas id="chart-csat-evol" height="250"></canvas></div>
+  <div class="stitle">Satisfação do Cliente (CSAT) <span id="scs"></span></div>
+  <div class="kpi-row" id="kr-csat"></div>
+  <div class="grid g3">
+    <div class="cc">
+      <div class="ct">Distribuição de Notas</div>
+      <canvas id="ccd" height="160"></canvas>
+    </div>
+    <div class="cc" style="grid-column:span 2">
+      <div class="ct">Evolução <span id="lbl-csatevol"></span></div>
+      <canvas id="cce" height="160"></canvas>
+    </div>
   </div>
-  <div class="chart-card">
-    <div class="chart-title">CSAT por Agente no Período</div>
-    <table class="data-table" id="tbl-csat-agente"></table>
-  </div>
-</div>
-
-<!-- CATEGORIAS -->
-<div class="page" id="page-categorias">
-  <div class="section-title">Categorias de Atendimento <span id="cat-period-sub"></span></div>
-  <div class="info-box" id="info-labels"></div>
-  <div class="charts-grid grid-2-1" style="margin-bottom:18px">
-    <div class="chart-card"><div class="chart-title">Top 15 Categorias</div><canvas id="chart-labels" height="370"></canvas></div>
-    <div class="chart-card"><div class="chart-title">Grupos Temáticos</div><canvas id="chart-grupos" height="370"></canvas></div>
-  </div>
-  <div class="chart-card">
-    <div class="chart-title">Tabela de Categorias</div>
-    <table class="data-table" id="tbl-labels"></table>
+  <div class="cc">
+    <div class="ct">CSAT por Agente</div>
+    <table class="dt" id="tca"></table>
   </div>
 </div>
 
-<!-- PADRÕES -->
+<!-- ════════ CATEGORIAS ════════ -->
+<div class="page" id="page-cats">
+  <div class="stitle">Categorias <span id="scat"></span></div>
+  <div id="inf-cat" class="info"></div>
+  <div class="grid g3">
+    <div class="cc" style="grid-column:span 2">
+      <div class="ct">Top 15 Categorias</div>
+      <canvas id="clab" height="200"></canvas>
+    </div>
+    <div class="cc">
+      <div class="ct">Grupos Temáticos</div>
+      <canvas id="cgr" height="200"></canvas>
+    </div>
+  </div>
+  <div class="cc">
+    <div class="ct">Tabela de Categorias</div>
+    <table class="dt" id="tlab"></table>
+  </div>
+</div>
+
+<!-- ════════ PADRÕES ════════ -->
 <div class="page" id="page-padroes">
-  <div class="section-title">Padrões de Demanda <span id="pad-period-sub"></span></div>
-  <div class="charts-grid grid-2" style="margin-bottom:18px">
-    <div class="chart-card"><div class="chart-title">Volume por Hora do Dia</div><canvas id="chart-hora" height="260"></canvas></div>
-    <div class="chart-card"><div class="chart-title">Volume por Dia da Semana</div><canvas id="chart-dow" height="260"></canvas></div>
+  <div class="stitle">Padrões de Demanda <span id="spad"></span></div>
+  <div class="grid g3">
+    <div class="cc">
+      <div class="ct">Por Hora do Dia</div>
+      <canvas id="chr" height="155"></canvas>
+    </div>
+    <div class="cc">
+      <div class="ct">Por Dia da Semana</div>
+      <canvas id="cdow" height="155"></canvas>
+    </div>
+    <div class="cc">
+      <div class="ct">Mensagens por Tipo</div>
+      <canvas id="cmts" height="155"></canvas>
+    </div>
   </div>
-  <div class="chart-card wide" style="margin-bottom:18px">
-    <div class="chart-title">Tendência Diária <span id="lbl-tendencia"></span></div>
-    <canvas id="chart-tendencia" height="180"></canvas>
+  <div class="cc">
+    <div class="ct">Tendência <span id="lbl-tend"></span></div>
+    <canvas id="ctend" height="130"></canvas>
   </div>
 </div>
 
-<!-- SLA -->
+<!-- ════════ SLA & TEMPOS ════════ -->
 <div class="page" id="page-sla">
-  <div class="section-title">SLA & Tempos de Resposta <span id="sla-period-sub"></span></div>
-  <div class="kpi-grid" id="kpi-sla"></div>
-  <div class="chart-card" style="margin-bottom:18px">
-    <div class="chart-title">Status de SLA por Agente <span>TFR &lt;30min | TMR &lt;24h</span></div>
-    <table class="data-table" id="tbl-sla"></table>
+  <div class="stitle">SLA & Tempos <span id="ssla"></span></div>
+  <div class="kpi-row" id="kr-sla"></div>
+  <div class="cc" style="margin-bottom:14px">
+    <div class="ct">Status SLA por Agente <span>TFR &lt;30min | TMR &lt;24h</span></div>
+    <table class="dt" id="tsla"></table>
   </div>
-  <div class="charts-grid grid-2">
-    <div class="chart-card"><div class="chart-title">TMR por Agente vs Meta</div><canvas id="chart-sla-tmr" height="260"></canvas></div>
-    <div class="chart-card"><div class="chart-title">TFR por Agente vs Meta</div><canvas id="chart-sla-tfr" height="260"></canvas></div>
+  <div class="grid g2">
+    <div class="cc">
+      <div class="ct">TMR por Agente vs Meta</div>
+      <canvas id="cstmr" height="170"></canvas>
+    </div>
+    <div class="cc">
+      <div class="ct">TFR por Agente vs Meta</div>
+      <canvas id="cstfr" height="170"></canvas>
+    </div>
   </div>
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════════════
-//  ESTADO GLOBAL
-// ═══════════════════════════════════════════════════════════
-let currentStart = null;
-let currentEnd   = null;
-let CHARTS = {};
-
-const C = {
-  blue:   'rgba(79,142,247,',  green:  'rgba(34,211,160,',
-  yellow: 'rgba(251,191,36,',  red:    'rgba(248,113,113,',
-  purple: 'rgba(167,139,250,', orange: 'rgba(251,146,60,',
-  teal:   'rgba(45,212,191,',  gray:   'rgba(148,163,184,'
-};
-const PALETTE = [C.blue,C.green,C.purple,C.yellow,C.orange,C.teal,C.red,C.gray];
-function palColor(i, a) { return PALETTE[i % PALETTE.length] + a + ')'; }
-
-const CHART_DEFAULTS = {
-  color: '#e2e8f0',
-  plugins: { legend: { labels: { color: '#94a3b8', font:{size:11}, padding:10 } } },
-  scales: {
-    x: { ticks:{color:'#94a3b8',font:{size:11}}, grid:{color:'rgba(45,49,88,0.4)'} },
-    y: { ticks:{color:'#94a3b8',font:{size:11}}, grid:{color:'rgba(45,49,88,0.4)'} }
+// ═══════ ESTADO ═══════
+let S=null, E=null;
+const CH={};
+const PAL=['rgba(79,142,247,','rgba(34,201,138,','rgba(155,125,248,','rgba(245,166,35,','rgba(240,120,64,','rgba(38,198,198,','rgba(224,92,92,','rgba(123,139,178,'];
+function pc(i,a){return PAL[i%PAL.length]+a+')'}
+const SC={
+  plugins:{legend:{labels:{color:'#7b8bb2',font:{size:10},padding:8}}},
+  scales:{
+    x:{ticks:{color:'#7b8bb2',font:{size:10}},grid:{color:'rgba(39,44,71,.5)'}},
+    y:{ticks:{color:'#7b8bb2',font:{size:10}},grid:{color:'rgba(39,44,71,.5)'}}
   }
 };
 
-// ═══════════════════════════════════════════════════════════
-//  NAVEGAÇÃO
-// ═══════════════════════════════════════════════════════════
-function showPage(id, el) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('page-' + id).classList.add('active');
-  el.classList.add('active');
+// ═══════ NAV ═══════
+function pg(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('page-'+id).classList.add('on');
+  el.classList.add('on');
 }
 
-// ═══════════════════════════════════════════════════════════
-//  DATAS
-// ═══════════════════════════════════════════════════════════
-function todayStr() { return new Date().toISOString().split('T')[0]; }
-function daysAgo(n) {
-  const d = new Date(); d.setDate(d.getDate() - n);
-  return d.toISOString().split('T')[0];
+// ═══════ DATAS ═══════
+const iso=d=>d.toISOString().split('T')[0];
+function qf(el,t){
+  document.querySelectorAll('.qb').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  const now=new Date();
+  let s,e;
+  if(t==='week'){
+    const d=new Date(now);d.setDate(d.getDate()-((d.getDay()+6)%7));
+    s=iso(d);e=iso(now);
+  }else if(t==='lastweek'){
+    const d=new Date(now);d.setDate(d.getDate()-((d.getDay()+6)%7)-7);
+    const d2=new Date(d);d2.setDate(d2.getDate()+6);
+    s=iso(d);e=iso(d2);
+  }else if(t==='month'){
+    s=iso(new Date(now.getFullYear(),now.getMonth(),1));e=iso(now);
+  }else if(t==='lastmonth'){
+    s=iso(new Date(now.getFullYear(),now.getMonth()-1,1));
+    e=iso(new Date(now.getFullYear(),now.getMonth(),0));
+  }else if(t==='3m'){
+    s=iso(new Date(now.getFullYear(),now.getMonth()-2,1));e=iso(now);
+  }else{s=null;e=null;}
+  document.getElementById('d0').value=s||'';
+  document.getElementById('d1').value=e||'';
+  S=s;E=e;upd();
 }
-function weekStart(offset=0) {
-  const d = new Date();
-  const day = d.getDay();
-  d.setDate(d.getDate() - ((day + 6) % 7) - offset * 7);
-  return d.toISOString().split('T')[0];
+function applyCustom(){
+  document.querySelectorAll('.qb').forEach(b=>b.classList.remove('on'));
+  S=document.getElementById('d0').value||null;
+  E=document.getElementById('d1').value||null;
+  upd();
 }
-function monthStart(offset=0) {
-  const d = new Date();
-  d.setMonth(d.getMonth() - offset, 1);
-  return d.toISOString().split('T')[0];
-}
-function monthEnd(offset=0) {
-  const d = new Date();
-  d.setMonth(d.getMonth() - offset + 1, 0);
-  return d.toISOString().split('T')[0];
-}
-function fmtDate(s) {
-  if (!s) return '—';
-  const [y,m,d] = s.split('-');
-  return `${d}/${m}/${y}`;
-}
-function fmtPeriod(s, e) { return `${fmtDate(s)} → ${fmtDate(e)}`; }
-
-function quickFilter(type) {
-  document.querySelectorAll('.qbtn').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
-  let s, e;
-  const t = new Date();
-  if (type === 'week') {
-    s = weekStart(0); e = todayStr();
-  } else if (type === 'lastweek') {
-    s = weekStart(1);
-    const d = new Date(s); d.setDate(d.getDate() + 6);
-    e = d.toISOString().split('T')[0];
-  } else if (type === 'month') {
-    s = monthStart(0); e = todayStr();
-  } else if (type === 'lastmonth') {
-    s = monthStart(1); e = monthEnd(1);
-  } else if (type === '3months') {
-    s = monthStart(2); e = todayStr();
-  } else {
-    s = null; e = null;
-  }
-  document.getElementById('dt-start').value = s || '';
-  document.getElementById('dt-end').value = e || '';
-  currentStart = s; currentEnd = e;
-  updateAll();
-}
-
-function applyCustomFilter() {
-  document.querySelectorAll('.qbtn').forEach(b => b.classList.remove('active'));
-  currentStart = document.getElementById('dt-start').value || null;
-  currentEnd   = document.getElementById('dt-end').value || null;
-  updateAll();
-}
-
-function inRange(dateStr) {
-  if (!currentStart && !currentEnd) return true;
-  if (currentStart && dateStr < currentStart) return false;
-  if (currentEnd   && dateStr > currentEnd)   return false;
+function inR(d){
+  if(S&&d<S)return false;
+  if(E&&d>E)return false;
   return true;
 }
+function fmtD(s){if(!s)return'—';const[y,m,d]=s.split('-');return`${d}/${m}/${y}`}
+function fmtP(){return(S||E)?`${fmtD(S)} → ${fmtD(E)}`:'Todo o período'}
 
-// ═══════════════════════════════════════════════════════════
-//  FILTRAGEM DOS DADOS
-// ═══════════════════════════════════════════════════════════
-function getFiltered() {
-  const D = SUPORTE_DATA;
-  return {
-    por_dia:    D.por_dia_agente.filter(r => inRange(r.d)),
-    csat:       D.csat_por_dia.filter(r => inRange(r.d)),
-    eventos:    D.eventos_por_dia.filter(r => inRange(r.d)),
-    labels:     D.labels_por_dia.filter(r => inRange(r.d)),
-    hora_dow:   D.hora_dow_por_dia.filter(r => inRange(r.d)),
+// granularidade
+function gran(){
+  if(!S&&!E)return'month';
+  const days=(new Date(E||iso(new Date))-new Date(S||'2025-01-01'))/86400000;
+  return days<=21?'day':days<=100?'week':'month';
+}
+
+// ═══════ FILTRO ═══════
+function fd(){
+  const D=SUPORTE_DATA;
+  return{
+    dia:D.por_dia_agente.filter(r=>inR(r.d)),
+    csat:D.csat_por_dia.filter(r=>inR(r.d)),
+    ev:D.eventos_por_dia.filter(r=>inR(r.d)),
+    lb:D.labels_por_dia.filter(r=>inR(r.d)),
+    hd:D.hora_dow_por_dia.filter(r=>inR(r.d)),
   };
 }
 
-function computeKPIs(fd) {
-  const total      = fd.por_dia.reduce((s,r) => s + r.t, 0);
-  const resolvidas = fd.por_dia.reduce((s,r) => s + (r.res||0), 0);
-  const taxa_res   = total ? Math.round(resolvidas/total*100) : 0;
-
-  const csatTotal  = fd.csat.reduce((s,r) => s + r.t, 0);
-  const csatSum    = fd.csat.reduce((s,r) => s + r.m*r.t, 0);
-  const csatMedia  = csatTotal ? +(csatSum/csatTotal).toFixed(2) : 0;
-
-  // TMR medio (first_response + conversation_resolved)
-  const rfr = fd.eventos.filter(r=>r.ev==='first_response');
-  const rtr = fd.eventos.filter(r=>r.ev==='conversation_resolved');
-  const tfrT = rfr.reduce((s,r)=>s+r.t,0);
-  const tfrS = rfr.reduce((s,r)=>s+r.s*r.t,0);
-  const tfrMin = tfrT ? +(tfrS/tfrT/60).toFixed(1) : 0;
-  const tmrT = rtr.reduce((s,r)=>s+r.t,0);
-  const tmrS = rtr.reduce((s,r)=>s+r.s*r.t,0);
-  const tmrH  = tmrT ? +(tmrS/tmrT/3600).toFixed(1) : 0;
-
-  return { total, resolvidas, taxa_res, csatMedia, csatTotal, tfrMin, tmrH };
+// ═══════ AGRUPAMENTO ═══════
+function byPeriod(rows,g){
+  const m={};
+  rows.forEach(r=>{
+    let k;
+    if(g==='month'){k=r.d.slice(0,7);}
+    else if(g==='week'){
+      const d=new Date(r.d),j=new Date(d.getFullYear(),0,1);
+      const w=Math.ceil(((d-j)/86400000+j.getDay()+1)/7);
+      k=`${d.getFullYear()}-S${String(w).padStart(2,'0')}`;
+    }else{k=r.d;}
+    m[k]=(m[k]||0)+r.t;
+  });
+  return Object.entries(m).sort();
 }
-
-function computeByAgent(fd) {
-  const map = {};
-  fd.por_dia.forEach(r => {
-    if (!map[r.ag]) map[r.ag] = {t:0, res:0};
-    map[r.ag].t   += r.t;
-    map[r.ag].res += (r.res||0);
+function csatByPeriod(rows,g){
+  const m={};
+  rows.forEach(r=>{
+    let k;
+    if(g==='month'){k=r.d.slice(0,7);}
+    else if(g==='week'){
+      const d=new Date(r.d),j=new Date(d.getFullYear(),0,1);
+      const w=Math.ceil(((d-j)/86400000+j.getDay()+1)/7);
+      k=`${d.getFullYear()}-S${String(w).padStart(2,'0')}`;
+    }else{k=r.d;}
+    if(!m[k])m[k]={s:0,t:0};m[k].s+=r.m*r.t;m[k].t+=r.t;
   });
-  return Object.entries(map).sort((a,b) => b[1].t - a[1].t);
+  return Object.entries(m).sort().map(([k,v])=>[k,+(v.s/v.t).toFixed(2)]);
 }
-
-function computeByPeriod(fd, granularity) {
-  // granularity: 'month' (YYYY-MM) or 'week' (YYYY-Www) or 'day' (YYYY-MM-DD)
-  const map = {};
-  fd.por_dia.forEach(r => {
-    let key;
-    if (granularity === 'month') {
-      key = r.d.substring(0,7);
-    } else if (granularity === 'week') {
-      const d = new Date(r.d);
-      const jan1 = new Date(d.getFullYear(),0,1);
-      const wk = Math.ceil(((d - jan1)/86400000 + jan1.getDay()+1)/7);
-      key = `${d.getFullYear()}-S${String(wk).padStart(2,'0')}`;
-    } else {
-      key = r.d;
-    }
-    map[key] = (map[key]||0) + r.t;
-  });
-  return Object.entries(map).sort();
+function kpis(f){
+  const tot=f.dia.reduce((s,r)=>s+r.t,0);
+  const res=f.dia.reduce((s,r)=>s+(r.res||0),0);
+  const ct=f.csat.reduce((s,r)=>s+r.t,0);
+  const cs=f.csat.reduce((s,r)=>s+r.m*r.t,0);
+  const rfr=f.ev.filter(r=>r.ev==='first_response');
+  const rtr=f.ev.filter(r=>r.ev==='conversation_resolved');
+  const tfrT=rfr.reduce((s,r)=>s+r.t,0),tfrS=rfr.reduce((s,r)=>s+r.s*r.t,0);
+  const tmrT=rtr.reduce((s,r)=>s+r.t,0),tmrS=rtr.reduce((s,r)=>s+r.s*r.t,0);
+  return{
+    tot,res,tx:tot?Math.round(res/tot*100):0,
+    csat:ct?+(cs/ct).toFixed(2):0,csatT:ct,
+    tfr:tfrT?+(tfrS/tfrT/60).toFixed(1):0,
+    tmr:tmrT?+(tmrS/tmrT/3600).toFixed(1):0,
+  };
 }
-
-function computeCsatByPeriod(fd, granularity) {
-  const map = {};
-  fd.csat.forEach(r => {
-    let key;
-    if (granularity === 'month') {
-      key = r.d.substring(0,7);
-    } else if (granularity === 'week') {
-      const d = new Date(r.d);
-      const jan1 = new Date(d.getFullYear(),0,1);
-      const wk = Math.ceil(((d - jan1)/86400000 + jan1.getDay()+1)/7);
-      key = `${d.getFullYear()}-S${String(wk).padStart(2,'0')}`;
-    } else {
-      key = r.d;
-    }
-    if (!map[key]) map[key] = {sum:0, t:0};
-    map[key].sum += r.m * r.t;
-    map[key].t   += r.t;
+function agMetrics(f){
+  const ag={},tfr={},tmr={},csat={};
+  f.dia.forEach(r=>{if(!ag[r.ag])ag[r.ag]=0;ag[r.ag]+=r.t});
+  f.ev.forEach(r=>{
+    if(r.ev==='first_response'){if(!tfr[r.ag])tfr[r.ag]={s:0,t:0};tfr[r.ag].s+=r.s*r.t;tfr[r.ag].t+=r.t}
+    if(r.ev==='conversation_resolved'){if(!tmr[r.ag])tmr[r.ag]={s:0,t:0};tmr[r.ag].s+=r.s*r.t;tmr[r.ag].t+=r.t}
   });
-  return Object.entries(map).sort().map(([k,v]) => [k, +(v.sum/v.t).toFixed(2)]);
-}
-
-function computeAgentMetrics(fd) {
-  const agMap = {};
-  fd.por_dia.forEach(r => {
-    if (!agMap[r.ag]) agMap[r.ag] = {t:0};
-    agMap[r.ag].t += r.t;
-  });
-  const tfrMap = {};
-  const tmrMap = {};
-  fd.eventos.forEach(r => {
-    if (r.ev==='first_response') {
-      if (!tfrMap[r.ag]) tfrMap[r.ag]={s:0,t:0};
-      tfrMap[r.ag].s += r.s*r.t; tfrMap[r.ag].t += r.t;
-    }
-    if (r.ev==='conversation_resolved') {
-      if (!tmrMap[r.ag]) tmrMap[r.ag]={s:0,t:0};
-      tmrMap[r.ag].s += r.s*r.t; tmrMap[r.ag].t += r.t;
-    }
-  });
-  const csatMap = {};
-  fd.csat.forEach(r => {
-    if (!csatMap[r.ag]) csatMap[r.ag]={s:0,t:0};
-    csatMap[r.ag].s += r.m*r.t; csatMap[r.ag].t += r.t;
-  });
-  return Object.entries(agMap)
-    .filter(([ag]) => ag !== 'Nao atribuido')
-    .map(([ag, v]) => ({
-      ag,
-      t: v.t,
-      tfr: tfrMap[ag] ? +(tfrMap[ag].s/tfrMap[ag].t/60).toFixed(1) : null,
-      tmr: tmrMap[ag] ? +(tmrMap[ag].s/tmrMap[ag].t/3600).toFixed(1) : null,
-      csat: csatMap[ag] ? +(csatMap[ag].s/csatMap[ag].t).toFixed(2) : null,
-      csatT: csatMap[ag] ? csatMap[ag].t : 0,
+  f.csat.forEach(r=>{if(!csat[r.ag])csat[r.ag]={s:0,t:0};csat[r.ag].s+=r.m*r.t;csat[r.ag].t+=r.t});
+  return Object.entries(ag)
+    .filter(([a])=>a!=='Nao atribuido')
+    .map(([a,t])=>({
+      a,t,
+      tfr:tfr[a]?+(tfr[a].s/tfr[a].t/60).toFixed(1):null,
+      tmr:tmr[a]?+(tmr[a].s/tmr[a].t/3600).toFixed(1):null,
+      csat:csat[a]?+(csat[a].s/csat[a].t).toFixed(2):null,
+      csatT:csat[a]?csat[a].t:0,
     }))
-    .sort((a,b) => b.t - a.t);
+    .sort((a,b)=>b.t-a.t);
+}
+function topLabels(f,n=15){
+  const m={};
+  f.lb.forEach(r=>{const l=r.l.trim();if(!l)return;m[l]=(m[l]||0)+r.t});
+  return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,n);
+}
+function horasDow(f){
+  const h=new Array(24).fill(0),d=new Array(7).fill(0);
+  f.hd.forEach(r=>{if(r.h>=0&&r.h<24)h[r.h]+=r.t;if(r.dow>=0&&r.dow<7)d[r.dow]+=r.t});
+  return{h,d};
 }
 
-function computeTopLabels(fd, n=15) {
-  const map = {};
-  fd.labels.forEach(r => {
-    const l = r.l.trim();
-    if (!l) return;
-    map[l] = (map[l]||0) + r.t;
-  });
-  return Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,n);
-}
-
-function computeHorasDow(fd) {
-  const horas = new Array(24).fill(0);
-  const dow   = new Array(7).fill(0);
-  fd.hora_dow.forEach(r => {
-    if (r.h >= 0 && r.h < 24) horas[r.h] += r.t;
-    if (r.dow >= 0 && r.dow < 7) dow[r.dow] += r.t;
-  });
-  return {horas, dow};
-}
-
-// ═══════════════════════════════════════════════════════════
-//  GRANULARIDADE AUTO
-// ═══════════════════════════════════════════════════════════
-function autoGranularity() {
-  if (!currentStart && !currentEnd) return 'month';
-  const s = new Date(currentStart || '2025-01-01');
-  const e = new Date(currentEnd   || todayStr());
-  const days = (e - s) / 86400000;
-  if (days <= 21)  return 'day';
-  if (days <= 100) return 'week';
-  return 'month';
-}
-
-// ═══════════════════════════════════════════════════════════
-//  CHART HELPERS
-// ═══════════════════════════════════════════════════════════
-function destroyChart(id) {
-  if (CHARTS[id]) { CHARTS[id].destroy(); delete CHARTS[id]; }
-}
-
-function makeBar(id, labels, data, colors, opts={}) {
-  destroyChart(id);
-  const ctx = document.getElementById(id);
-  if (!ctx) return;
-  CHARTS[id] = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: opts.label||'',
-        data,
-        backgroundColor: colors,
-        borderRadius: 6
-      },
-      ...(opts.line ? [{
-        label: opts.line.label,
-        data: new Array(data.length).fill(opts.line.value),
-        type: 'line',
-        borderColor: opts.line.color||'rgba(79,142,247,1)',
-        borderDash: [7,4], borderWidth: 2, pointRadius: 0, fill: false
-      }] : [])
-      ]
-    },
-    options: {
-      indexAxis: opts.horizontal ? 'y' : 'x',
-      plugins: { ...CHART_DEFAULTS.plugins, legend: { display: !!opts.showLegend, labels: {color:'#94a3b8',font:{size:11}} } },
-      scales: {
-        x: { ...CHART_DEFAULTS.scales.x, min: opts.xMin },
-        y: { ...CHART_DEFAULTS.scales.y, min: opts.yMin }
-      }
+// ═══════ CHART HELPERS ═══════
+function dc(id){if(CH[id]){CH[id].destroy();delete CH[id]}}
+function mkBar(id,labels,data,colors,opt={}){
+  dc(id);const ctx=document.getElementById(id);if(!ctx)return;
+  CH[id]=new Chart(ctx,{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:opt.label||'',data,backgroundColor:colors,borderRadius:4},
+      ...(opt.line?[{label:opt.line.lbl,data:new Array(data.length).fill(opt.line.v),
+        type:'line',borderColor:opt.line.c||'rgba(79,142,247,.8)',borderDash:[6,3],
+        borderWidth:1.5,pointRadius:0,fill:false}]:[])
+    ]},
+    options:{
+      indexAxis:opt.hz?'y':'x',
+      plugins:{...SC.plugins,legend:{display:!!opt.legend,labels:{color:'#7b8bb2',font:{size:10},padding:6}}},
+      scales:{x:{...SC.scales.x,min:opt.xMin},y:{...SC.scales.y,min:opt.yMin}}
     }
   });
 }
-
-function makeLine(id, labels, datasets) {
-  destroyChart(id);
-  const ctx = document.getElementById(id);
-  if (!ctx) return;
-  CHARTS[id] = new Chart(ctx, {
-    type: 'line',
-    data: { labels, datasets },
-    options: {
-      plugins: CHART_DEFAULTS.plugins,
-      scales: CHART_DEFAULTS.scales
-    }
+function mkLine(id,labels,datasets,opts={}){
+  dc(id);const ctx=document.getElementById(id);if(!ctx)return;
+  CH[id]=new Chart(ctx,{type:'line',data:{labels,datasets},
+    options:{plugins:SC.plugins,scales:{x:SC.scales.x,y:{...SC.scales.y,min:opts.yMin}}}
+  });
+}
+function mkDonut(id,labels,data,colors){
+  dc(id);const ctx=document.getElementById(id);if(!ctx)return;
+  CH[id]=new Chart(ctx,{type:'doughnut',
+    data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:1.5,borderColor:'#161926'}]},
+    options:{plugins:{legend:{position:'bottom',labels:{color:'#7b8bb2',padding:8,font:{size:10}}}},cutout:'64%'}
   });
 }
 
-function makeDoughnut(id, labels, data, colors) {
-  destroyChart(id);
-  const ctx = document.getElementById(id);
-  if (!ctx) return;
-  CHARTS[id] = new Chart(ctx, {
-    type: 'doughnut',
-    data: { labels, datasets:[{data, backgroundColor:colors, borderWidth:2}] },
-    options: { plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',padding:10,font:{size:10}}}}, cutout:'62%' }
+// ═══════ RENDER PAGES ═══════
+function upd(){
+  const p=fmtP();
+  document.getElementById('pdis').textContent=p;
+  ['sg','sag','scs','scat','spad','ssla'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.textContent=p;
   });
+  const f=fd();
+  const k=kpis(f);
+  const g=gran();
+  rGeral(f,k,g);
+  rAgentes(f);
+  rCsat(f,g);
+  rCats(f);
+  rPadroes(f,g);
+  rSLA(f);
 }
 
-// ═══════════════════════════════════════════════════════════
-//  UPDATE ALL
-// ═══════════════════════════════════════════════════════════
-function updateAll() {
-  const fd   = getFiltered();
-  const kpis = computeKPIs(fd);
-  const gran = autoGranularity();
-
-  const periodLabel = (currentStart || currentEnd)
-    ? fmtPeriod(currentStart, currentEnd)
-    : 'Todo o período';
-  document.getElementById('period-display').textContent = periodLabel;
-
-  // Sublegendas
-  ['vg-period-sub','ag-period-sub','csat-period-sub','cat-period-sub','pad-period-sub','sla-period-sub']
-    .forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.textContent = periodLabel;
-    });
-
-  renderVisaoGeral(fd, kpis, gran);
-  renderAgentes(fd);
-  renderCsat(fd, gran);
-  renderCategorias(fd);
-  renderPadroes(fd, gran);
-  renderSLA(fd);
-}
-
-// ═══════════════════════════════════════════════════════════
-//  VISÃO GERAL
-// ═══════════════════════════════════════════════════════════
-function renderVisaoGeral(fd, kpis, gran) {
-  // KPI cards
-  const taxaOk = kpis.taxa_res >= 95;
-  const csatOk = kpis.csatMedia >= 4.5;
-  document.getElementById('kpi-geral').innerHTML = `
-    <div class="kpi-card blue"><div class="kpi-label">Total Conversas</div><div class="kpi-value">${kpis.total.toLocaleString('pt-BR')}</div><div class="kpi-sub">no período selecionado</div></div>
-    <div class="kpi-card green"><div class="kpi-label">Resolvidas</div><div class="kpi-value">${kpis.resolvidas.toLocaleString('pt-BR')}</div><div class="kpi-sub">${kpis.taxa_res}% de resolução</div><span class="kpi-badge ${taxaOk?'up':'down'}">${taxaOk?'Meta atingida':'Abaixo da meta'}</span></div>
-    <div class="kpi-card green"><div class="kpi-label">CSAT Médio</div><div class="kpi-value">${kpis.csatMedia || '—'}</div><div class="kpi-sub">${kpis.csatTotal} avaliações</div><span class="kpi-badge ${csatOk?'up':'neutral'}">${csatOk?'Excelente':'Monitorar'}</span></div>
-    <div class="kpi-card blue"><div class="kpi-label">TMR Médio</div><div class="kpi-value">${kpis.tmrH}h</div><div class="kpi-sub">Tempo médio resolução</div><span class="kpi-badge ${kpis.tmrH<=24?'up':'down'}">${kpis.tmrH<=24?'Dentro do SLA':'Acima do SLA'}</span></div>
-    <div class="kpi-card teal"><div class="kpi-label">TFR Médio</div><div class="kpi-value">${kpis.tfrMin}min</div><div class="kpi-sub">Primeira resposta</div><span class="kpi-badge ${kpis.tfrMin<=30?'up':'down'}">${kpis.tfrMin<=30?'Dentro da meta':'Atenção'}</span></div>
+// ── GERAL ──
+function rGeral(f,k,g){
+  document.getElementById('kr-geral').innerHTML=`
+    <div class="kc bl"><div class="kl">Conversas</div><div class="kv">${k.tot.toLocaleString('pt-BR')}</div><div class="ks">no período</div></div>
+    <div class="kc gr"><div class="kl">Resolvidas</div><div class="kv">${k.res.toLocaleString('pt-BR')}</div><div class="ks">${k.tx}% de resolução</div><span class="kb ${k.tx>=95?'up':'dn'}">${k.tx>=95?'OK':'Atenção'}</span></div>
+    <div class="kc gr"><div class="kl">CSAT</div><div class="kv">${k.csat||'—'}</div><div class="ks">${k.csatT} avaliações</div><span class="kb ${k.csat>=4.5?'up':'nt'}">${k.csat>=4.5?'Excelente':'Monitorar'}</span></div>
+    <div class="kc ${k.tmr<=24?'te':'ye'}"><div class="kl">TMR</div><div class="kv">${k.tmr}h</div><div class="ks">tempo resolução</div><span class="kb ${k.tmr<=24?'up':'dn'}">${k.tmr<=24?'Dentro SLA':'Acima SLA'}</span></div>
+    <div class="kc ${k.tfr<=30?'bl':'or'}"><div class="kl">TFR</div><div class="kv">${k.tfr}min</div><div class="ks">primeira resposta</div><span class="kb ${k.tfr<=30?'up':'dn'}">${k.tfr<=30?'OK':'Atenção'}</span></div>
   `;
-
-  // Volume por período
-  const byPeriod = computeByPeriod(fd, gran);
-  const granLabel = gran==='day' ? 'diário' : gran==='week' ? 'semanal' : 'mensal';
-  document.getElementById('lbl-mes-ou-semana').textContent = `Agrupamento ${granLabel}`;
-  makeBar('chart-volume',
-    byPeriod.map(r=>r[0]),
-    byPeriod.map(r=>r[1]),
-    byPeriod.map((_,i) => palColor(1, '0.8'))
-  );
-
-  // Status donut (do período filtrado)
-  const total = fd.por_dia.reduce((s,r)=>s+r.t,0);
-  const resol = fd.por_dia.reduce((s,r)=>s+(r.res||0),0);
-  makeDoughnut('chart-status',
-    ['Resolvidas','Outras/Abertas'],
-    [resol, total-resol],
-    ['rgba(34,211,160,0.85)','rgba(251,191,36,0.8)']
-  );
-
-  // Por agente
-  const agd = computeByAgent(fd).filter(([ag])=>ag!=='Nao atribuido');
-  makeBar('chart-agente-vol',
-    agd.map(r=>r[0].split(' ')[0]),
-    agd.map(r=>r[1].t),
-    agd.map((_,i)=>palColor(i,'0.85'))
-  );
-
-  // Mensagens tipo (estático)
-  const mt = SUPORTE_DATA.msg_tipos;
-  makeDoughnut('chart-msg-tipo',
-    ['Enviadas','Recebidas','Sistema','Template'],
-    [mt.outgoing||0, mt.incoming||0, mt.activity||0, mt.template||0],
-    ['rgba(79,142,247,0.85)','rgba(34,211,160,0.85)','rgba(148,163,184,0.6)','rgba(167,139,250,0.85)']
-  );
-
-  // Equipes
-  const rows = SUPORTE_DATA.conversas_por_equipe;
-  const maxT  = Math.max(...rows.map(r=>r.t));
-  const totalEq = rows.reduce((s,r)=>s+r.t,0);
-  document.getElementById('tbl-equipe').innerHTML = `
-    <thead><tr><th>Equipe</th><th>Conversas</th><th>% Total</th><th>Distribuição</th></tr></thead>
-    <tbody>${rows.map(r=>`
-      <tr><td>${r.eq}</td><td><strong>${r.t.toLocaleString('pt-BR')}</strong></td>
-      <td>${(r.t/totalEq*100).toFixed(1)}%</td>
-      <td><div class="progress-bar"><div class="progress-fill" style="width:${(r.t/maxT*100).toFixed(1)}%;background:var(--blue)"></div></div></td>
-      </tr>`).join('')}
-    </tbody>`;
+  const glbl=g==='day'?'diário':g==='week'?'semanal':'mensal';
+  document.getElementById('lbl-vol').textContent=`Agrupamento ${glbl}`;
+  const bp=byPeriod(f.dia,g);
+  mkBar('cv',bp.map(r=>r[0]),bp.map(r=>r[1]),bp.map(()=>pc(1,'.8')));
+  const tot=f.dia.reduce((s,r)=>s+r.t,0),res=f.dia.reduce((s,r)=>s+(r.res||0),0);
+  mkDonut('cs',['Resolvidas','Outras'],[res,tot-res],['rgba(34,201,138,.85)','rgba(245,166,35,.75)']);
+  const agd=Object.entries(f.dia.reduce((m,r)=>{if(r.ag!=='Nao atribuido'){m[r.ag]=(m[r.ag]||0)+r.t}return m},{})).sort((a,b)=>b[1]-a[1]);
+  mkBar('cav',agd.map(r=>r[0].split(' ')[0]),agd.map(r=>r[1]),agd.map((_,i)=>pc(i,'.8')));
+  const mt=SUPORTE_DATA.msg_tipos;
+  mkDonut('cmt',['Enviadas','Recebidas','Sistema','Template'],
+    [mt.outgoing||0,mt.incoming||0,mt.activity||0,mt.template||0],
+    ['rgba(79,142,247,.85)','rgba(34,201,138,.85)','rgba(123,139,178,.6)','rgba(155,125,248,.85)']);
+  const eq=SUPORTE_DATA.conversas_por_equipe,eqT=eq.reduce((s,r)=>s+r.t,0);
+  document.getElementById('teq').innerHTML=`<thead><tr><th>Equipe</th><th>Total</th><th>%</th></tr></thead><tbody>`+
+    eq.map(r=>`<tr><td>${r.eq}</td><td>${r.t.toLocaleString('pt-BR')}</td><td>${(r.t/eqT*100).toFixed(1)}%</td></tr>`).join('')+`</tbody>`;
 }
 
-// ═══════════════════════════════════════════════════════════
-//  AGENTES
-// ═══════════════════════════════════════════════════════════
-function renderAgentes(fd) {
-  const metrics = computeAgentMetrics(fd);
+// ── AGENTES ──
+function rAgentes(f){
+  const na=f.dia.filter(r=>r.ag==='Nao atribuido').reduce((s,r)=>s+r.t,0);
+  const alEl=document.getElementById('al-nao');
+  if(na>0){alEl.style.display='';alEl.innerHTML=`<strong>Atenção:</strong> ${na} conversas sem atribuição neste período.`}
+  else{alEl.style.display='none'}
+  const m=agMetrics(f);
+  const sla=(tfr,tmr)=>tmr>24||tfr>30?`<span class="br">Crítico</span>`:tmr>18?`<span class="by">Atenção</span>`:`<span class="bg">Bom</span>`;
+  document.getElementById('trank').innerHTML=`<thead><tr><th>#</th><th>Agente</th><th>Conv.</th><th>TFR</th><th>TMR</th><th>CSAT</th><th>SLA</th></tr></thead><tbody>`+
+    m.map((v,i)=>`<tr><td>${i+1}</td><td><strong>${v.a}</strong></td><td>${v.t.toLocaleString('pt-BR')}</td>
+    <td>${v.tfr!==null?(v.tfr<1?'&lt;1min':v.tfr+'min'):'—'}</td>
+    <td>${v.tmr!==null?v.tmr+'h':'—'}</td>
+    <td>${v.csat!==null?`<span class="star">★</span> ${v.csat} (${v.csatT})`:'—'}</td>
+    <td>${sla(v.tfr,v.tmr)}</td></tr>`).join('')+`</tbody>`;
+  const labs=m.map(v=>v.a.split(' ')[0]);
+  mkBar('cagv',labs,m.map(v=>v.t),m.map((_,i)=>pc(i,'.85')));
+  mkBar('ctmr',labs,m.map(v=>v.tmr),m.map(v=>v.tmr===null?'transparent':v.tmr>24?pc(6,'.8'):v.tmr>18?pc(3,'.8'):pc(1,'.85')),
+    {line:{lbl:'Meta 24h',v:24,c:'rgba(79,142,247,.7)'},legend:true});
+  mkBar('ctfr',labs,m.map(v=>v.tfr),m.map(v=>v.tfr===null?'transparent':v.tfr>30?pc(6,'.8'):v.tfr>15?pc(3,'.8'):pc(1,'.85')),
+    {line:{lbl:'Meta 30min',v:30,c:'rgba(224,92,92,.7)'},legend:true});
+  const ca=m.filter(v=>v.csat!==null);
+  mkBar('ccag',ca.map(v=>v.a.split(' ')[0]),ca.map(v=>v.csat),ca.map(v=>v.csat>=4.8?pc(1,'.85'):pc(3,'.8')),{yMin:4.0});
+}
 
-  // Alerta nao atribuido
-  const naoAtrib = fd.por_dia.filter(r=>r.ag==='Nao atribuido').reduce((s,r)=>s+r.t,0);
-  const alertEl = document.getElementById('alert-nao-atrib');
-  if (naoAtrib > 0) {
-    alertEl.style.display='';
-    alertEl.innerHTML = `<strong>Atenção:</strong> ${naoAtrib} conversas sem atribuição neste período — revisar regras de roteamento.`;
-  } else { alertEl.style.display='none'; }
+// ── CSAT ──
+function rCsat(f,g){
+  const ct=f.csat.reduce((s,r)=>s+r.t,0);
+  const cs=f.csat.reduce((s,r)=>s+r.m*r.t,0);
+  const cm=ct?+(cs/ct).toFixed(2):0;
+  const tot=f.dia.reduce((s,r)=>s+r.t,0);
+  const tx=tot?+(ct/tot*100).toFixed(1):0;
+  document.getElementById('kr-csat').innerHTML=`
+    <div class="kc gr"><div class="kl">CSAT Médio</div><div class="kv">${cm||'—'}</div><div class="ks">de 5,0</div><span class="kb ${cm>=4.5?'up':'nt'}">${cm>=4.5?'Excelente':'Monitorar'}</span></div>
+    <div class="kc bl"><div class="kl">Avaliações</div><div class="kv">${ct}</div><div class="ks">no período</div></div>
+    <div class="kc ${tx>=15?'gr':'ye'}"><div class="kl">Taxa Resposta</div><div class="kv">${tx}%</div><div class="ks">responderam pesquisa</div><span class="kb ${tx>=15?'up':'nt'}">${tx>=15?'Boa':'Melhorar'}</span></div>
+  `;
+  const dist=SUPORTE_DATA.csat_dist;
+  mkBar('ccd',dist.map(r=>r.r+'⭐'),dist.map(r=>r.t),
+    ['rgba(224,92,92,.85)','rgba(240,120,64,.8)','rgba(245,166,35,.8)','rgba(38,198,198,.8)','rgba(34,201,138,.9)']);
+  const gl=g==='day'?'diária':g==='week'?'semanal':'mensal';
+  document.getElementById('lbl-csatevol').textContent=`tendência ${gl}`;
+  const ce=csatByPeriod(f.csat,g);
+  mkLine('cce',ce.map(r=>r[0]),[{
+    label:'CSAT',data:ce.map(r=>r[1]),
+    borderColor:'rgba(34,201,138,1)',backgroundColor:'rgba(34,201,138,.08)',
+    tension:.35,fill:true,pointRadius:3,pointBackgroundColor:'rgba(34,201,138,1)'
+  }],{yMin:4.0});
+  const cm2={};
+  f.csat.forEach(r=>{if(!cm2[r.ag])cm2[r.ag]={s:0,t:0};cm2[r.ag].s+=r.m*r.t;cm2[r.ag].t+=r.t});
+  const cr=Object.entries(cm2).filter(([a])=>a!=='N/A')
+    .map(([a,v])=>({a,m:+(v.s/v.t).toFixed(2),t:v.t})).sort((a,b)=>b.m-a.m);
+  document.getElementById('tca').innerHTML=`<thead><tr><th>Agente</th><th>CSAT</th><th>Avaliações</th><th>Status</th></tr></thead><tbody>`+
+    cr.map(r=>`<tr><td><strong>${r.a}</strong></td><td><span class="star">★</span> ${r.m}</td><td>${r.t}</td>
+    <td>${r.m>=4.8?'<span class="bg">Excelente</span>':r.m>=4.5?'<span class="by">Bom</span>':'<span class="br">Atenção</span>'}</td></tr>`).join('')+`</tbody>`;
+}
 
-  // Ranking table
-  const slaStatus = (tfr, tmr) => {
-    if (tmr > 24 || (tfr && tfr > 30)) return '<span class="badge-r">Crítico</span>';
-    if (tmr > 18 || (tfr && tfr > 15)) return '<span class="badge-y">Atenção</span>';
-    return '<span class="badge-g">Bom</span>';
+// ── CATEGORIAS ──
+function rCats(f){
+  const top=topLabels(f);
+  const tot=top.reduce((s,r)=>s+r[1],0);
+  if(!top.length){document.getElementById('inf-cat').innerHTML='<strong>Sem dados</strong> para o período selecionado.';return}
+  const t2=top.slice(0,2).reduce((s,r)=>s+r[1],0);
+  document.getElementById('inf-cat').innerHTML=`<strong>Insight:</strong> "${top[0]?.[0]}" e "${top[1]?.[0]}" = ${tot?Math.round(t2/tot*100):0}% das categorias — candidatos para autoatendimento.`;
+  mkBar('clab',top.map(r=>r[0]),top.map(r=>r[1]),top.map((_,i)=>pc(i,'.8')),{hz:true});
+  const grupos={
+    'Inatividade/Backup':top.filter(r=>r[0].includes('inativ')||r[0].includes('backup')).reduce((s,r)=>s+r[1],0),
+    'Fiscal/XML/NF':top.filter(r=>['xml','nf','fiscal','nota','nfce'].some(k=>r[0].includes(k))).reduce((s,r)=>s+r[1],0),
+    'Financeiro':top.filter(r=>r[0].includes('financ')||r[0].includes('boleto')).reduce((s,r)=>s+r[1],0),
+    'Orçamento':top.filter(r=>r[0].includes('or')||r[0].includes('pedido')).reduce((s,r)=>s+r[1],0),
+    'Outros':top.filter(r=>!['inativ','backup','xml','nf','fiscal','nota','nfce','financ','boleto','or','pedido'].some(k=>r[0].includes(k))).reduce((s,r)=>s+r[1],0),
   };
-  document.getElementById('tbl-agentes-ranking').innerHTML = `
-    <thead><tr><th>#</th><th>Agente</th><th>Conversas</th><th>TFR</th><th>TMR</th><th>CSAT</th><th>SLA</th></tr></thead>
-    <tbody>${metrics.map((m,i)=>`
-      <tr>
-        <td>${i+1}</td><td><strong>${m.ag}</strong></td>
-        <td>${m.t.toLocaleString('pt-BR')}</td>
-        <td>${m.tfr!==null ? (m.tfr<1?'<1 min':m.tfr+' min') : '—'}</td>
-        <td>${m.tmr!==null ? m.tmr+'h' : '—'}</td>
-        <td>${m.csat!==null ? '<span class="stars">★</span> '+m.csat+' ('+m.csatT+')' : '—'}</td>
-        <td>${slaStatus(m.tfr, m.tmr)}</td>
-      </tr>`).join('')}
-    </tbody>`;
-
-  const labels = metrics.map(m=>m.ag.split(' ')[0]);
-
-  // Volume
-  makeBar('chart-ag-bar', labels, metrics.map(m=>m.t), metrics.map((_,i)=>palColor(i,'0.85')));
-
-  // TMR
-  const tmrData = metrics.map(m=>m.tmr);
-  makeBar('chart-tmr', labels, tmrData, tmrData.map(v => v===null?'transparent':v>24?'rgba(248,113,113,0.8)':v>18?'rgba(251,191,36,0.8)':'rgba(34,211,160,0.85)'),
-    { line:{label:'Meta 24h', value:24, color:'rgba(79,142,247,0.9)'}, showLegend:true });
-
-  // TFR
-  const tfrData = metrics.map(m=>m.tfr);
-  makeBar('chart-tfr', labels, tfrData, tfrData.map(v => v===null?'transparent':v>30?'rgba(248,113,113,0.8)':v>15?'rgba(251,191,36,0.8)':'rgba(34,211,160,0.85)'),
-    { line:{label:'Meta 30min', value:30, color:'rgba(248,113,113,0.9)'}, showLegend:true });
-
-  // CSAT por agente
-  const csatAgs = metrics.filter(m=>m.csat!==null);
-  makeBar('chart-csat-ag',
-    csatAgs.map(m=>m.ag.split(' ')[0]),
-    csatAgs.map(m=>m.csat),
-    csatAgs.map(m=>m.csat>=4.8?'rgba(34,211,160,0.85)':'rgba(251,191,36,0.8)'),
-    { yMin: 4.0 }
-  );
+  const ge=Object.entries(grupos).filter(r=>r[1]>0);
+  mkDonut('cgr',ge.map(r=>r[0]),ge.map(r=>r[1]),ge.map((_,i)=>pc(i,'.85')));
+  const mx=top[0]?.[1]||1;
+  document.getElementById('tlab').innerHTML=`<thead><tr><th>Categoria</th><th>Conversas</th><th>%</th><th>Dist.</th></tr></thead><tbody>`+
+    top.map(([l,t])=>`<tr><td>${l}</td><td>${t.toLocaleString('pt-BR')}</td>
+    <td>${tot?(t/tot*100).toFixed(1):0}%</td>
+    <td><div class="pb"><div class="pf" style="width:${(t/mx*100).toFixed(0)}%;background:var(--blue)"></div></div></td></tr>`).join('')+`</tbody>`;
 }
 
-// ═══════════════════════════════════════════════════════════
-//  CSAT
-// ═══════════════════════════════════════════════════════════
-function renderCsat(fd, gran) {
-  const csatTotal  = fd.csat.reduce((s,r)=>s+r.t,0);
-  const csatSum    = fd.csat.reduce((s,r)=>s+r.m*r.t,0);
-  const csatMedia  = csatTotal ? +(csatSum/csatTotal).toFixed(2) : 0;
-  const total      = fd.por_dia.reduce((s,r)=>s+r.t,0);
-  const taxaCsat   = total ? +(csatTotal/total*100).toFixed(1) : 0;
+// ── PADRÕES ──
+function rPadroes(f,g){
+  const{h,d}=horasDow(f);
+  const days=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  mkLine('chr',Array.from({length:24},(_,i)=>i+'h'),[{
+    label:'Conv',data:h,borderColor:'rgba(79,142,247,1)',backgroundColor:'rgba(79,142,247,.1)',
+    tension:.35,fill:true,pointRadius:2,pointBackgroundColor:'rgba(79,142,247,1)'
+  }]);
+  mkBar('cdow',days,d,d.map((v,i)=>v===Math.max(...d)?pc(0,'.95'):i===0||i===6?pc(7,'.4'):pc(0,'.65')));
+  const mt=SUPORTE_DATA.msg_tipos;
+  mkDonut('cmts',['Enviadas','Recebidas','Sistema','Template'],
+    [mt.outgoing||0,mt.incoming||0,mt.activity||0,mt.template||0],
+    [pc(0,'.85'),pc(1,'.85'),pc(7,'.5'),pc(2,'.85')]);
+  const gl=g==='day'?'diária':g==='week'?'semanal':'mensal';
+  document.getElementById('lbl-tend').textContent=`Agrupamento ${gl}`;
+  const bp=byPeriod(f.dia,g);
+  mkLine('ctend',bp.map(r=>r[0]),[{
+    label:'Conversas',data:bp.map(r=>r[1]),
+    borderColor:'rgba(34,201,138,1)',backgroundColor:'rgba(34,201,138,.08)',
+    tension:.25,fill:true,pointRadius:bp.length>30?0:3
+  }]);
+}
 
-  // KPI CSAT
-  document.getElementById('kpi-csat').innerHTML = `
-    <div class="kpi-card green"><div class="kpi-label">CSAT Médio</div><div class="kpi-value">${csatMedia||'—'}</div><div class="kpi-sub">de 5,0</div><span class="kpi-badge ${csatMedia>=4.5?'up':'neutral'}">${csatMedia>=4.5?'Excelente':'Monitorar'}</span></div>
-    <div class="kpi-card blue"><div class="kpi-label">Avaliações</div><div class="kpi-value">${csatTotal}</div><div class="kpi-sub">no período</div></div>
-    <div class="kpi-card yellow"><div class="kpi-label">Taxa de Resposta</div><div class="kpi-value">${taxaCsat}%</div><div class="kpi-sub">responderam à pesquisa</div><span class="kpi-badge ${taxaCsat>=15?'up':'down'}">${taxaCsat>=15?'Boa':'Melhorar coleta'}</span></div>
+// ── SLA ──
+function rSLA(f){
+  const m=agMetrics(f);
+  const vt=m.filter(v=>v.tfr!==null),vm=m.filter(v=>v.tmr!==null);
+  const at=vt.length?+(vt.reduce((s,v)=>s+v.tfr,0)/vt.length).toFixed(1):0;
+  const am=vm.length?+(vm.reduce((s,v)=>s+v.tmr,0)/vm.length).toFixed(1):0;
+  const bt=vm.reduce((b,v)=>!b||v.tmr<b.tmr?v:b,null);
+  const wt=vm.reduce((w,v)=>!w||v.tmr>w.tmr?v:w,null);
+  document.getElementById('kr-sla').innerHTML=`
+    <div class="kc ${am<=24?'gr':'ye'}"><div class="kl">TMR Médio</div><div class="kv">${am}h</div><div class="ks">Resolução</div><span class="kb ${am<=24?'up':'nt'}">Meta &lt;24h</span></div>
+    <div class="kc ${at<=30?'gr':'or'}"><div class="kl">TFR Médio</div><div class="kv">${at}min</div><div class="ks">Primeira resposta</div><span class="kb ${at<=30?'up':'dn'}">Meta &lt;30min</span></div>
+    ${bt?`<div class="kc gr"><div class="kl">Melhor TMR</div><div class="kv">${bt.tmr}h</div><div class="ks">${bt.a.split(' ')[0]}</div><span class="kb up">Referência</span></div>`:''}
+    ${wt?`<div class="kc ${wt.tmr>24?'re':'ye'}"><div class="kl">Maior TMR</div><div class="kv">${wt.tmr}h</div><div class="ks">${wt.a.split(' ')[0]}</div><span class="kb ${wt.tmr>24?'dn':'nt'}">${wt.tmr>24?'Viola SLA':'Dentro'}</span></div>`:''}
   `;
-
-  // Distribuição (usa dados estáticos filtrados pelo período)
-  const distMap = {};
-  fd.csat.forEach(r => {
-    // Não temos nota individual no diário, usamos distribuição geral
-  });
-  // Distribuição geral (estática)
-  const dist = SUPORTE_DATA.csat_dist;
-  makeBar('chart-csat-dist',
-    dist.map(r => r.r + (r.r===1?' ⭐':r.r===2?' ⭐⭐':r.r===3?' ⭐⭐⭐':r.r===4?' ⭐⭐⭐⭐':' ⭐⭐⭐⭐⭐')),
-    dist.map(r=>r.t),
-    ['rgba(248,113,113,0.85)','rgba(251,146,60,0.8)','rgba(251,191,36,0.8)','rgba(45,212,191,0.8)','rgba(34,211,160,0.9)']
-  );
-
-  // Evolução por período
-  const csatEvol = computeCsatByPeriod(fd, gran);
-  const granLabel = gran==='day'?'diária':gran==='week'?'semanal':'mensal';
-  document.getElementById('lbl-csat-evolucao').textContent = `tendência ${granLabel}`;
-  makeLine('chart-csat-evol',
-    csatEvol.map(r=>r[0]),
-    [{
-      label: 'CSAT Médio',
-      data: csatEvol.map(r=>r[1]),
-      borderColor: 'rgba(34,211,160,1)',
-      backgroundColor: 'rgba(34,211,160,0.1)',
-      tension: 0.35, fill:true, pointRadius:4,
-      pointBackgroundColor:'rgba(34,211,160,1)'
-    }]
-  );
-
-  // CSAT por agente tabela
-  const csatMap = {};
-  fd.csat.forEach(r => {
-    if (!csatMap[r.ag]) csatMap[r.ag]={s:0,t:0};
-    csatMap[r.ag].s += r.m*r.t; csatMap[r.ag].t += r.t;
-  });
-  const csatRows = Object.entries(csatMap)
-    .map(([ag,v])=>({ag, media:+(v.s/v.t).toFixed(2), t:v.t}))
-    .filter(r=>r.ag!=='N/A')
-    .sort((a,b)=>b.media-a.media);
-  document.getElementById('tbl-csat-agente').innerHTML = `
-    <thead><tr><th>Agente</th><th>CSAT Médio</th><th>Avaliações</th><th>Status</th></tr></thead>
-    <tbody>${csatRows.map(r=>`
-      <tr><td><strong>${r.ag}</strong></td>
-      <td><span class="stars">★</span> ${r.media}</td>
-      <td>${r.t}</td>
-      <td>${r.media>=4.8?'<span class="badge-g">Excelente</span>':r.media>=4.5?'<span class="badge-y">Bom</span>':'<span class="badge-r">Atenção</span>'}</td>
-      </tr>`).join('')}
-    </tbody>`;
+  const sl=(tfr,tmr)=>{
+    const st=tfr!==null?(tfr<=30?'<span class="bg">OK</span>':'<span class="by">Atenção</span>'):'—';
+    const sm=tmr!==null?(tmr<=24?'<span class="bg">Dentro</span>':tmr<=36?'<span class="by">Atenção</span>':'<span class="br">Violação</span>'):'—';
+    const sg=(!tmr||(tmr<=24&&(!tfr||tfr<=30)))?'<span class="bg">Bom</span>':tmr>36?'<span class="br">Crítico</span>':'<span class="by">Atenção</span>';
+    return{st,sm,sg};
+  };
+  document.getElementById('tsla').innerHTML=`<thead><tr><th>Agente</th><th>TFR</th><th>Status TFR</th><th>TMR</th><th>Status TMR</th><th>Conv.</th><th>Geral</th></tr></thead><tbody>`+
+    m.map(v=>{const{st,sm,sg}=sl(v.tfr,v.tmr);return`<tr>
+    <td><strong>${v.a}</strong></td>
+    <td>${v.tfr!==null?(v.tfr<1?'&lt;1min':v.tfr+'min'):'—'}</td><td>${st}</td>
+    <td>${v.tmr!==null?v.tmr+'h':'—'}</td><td>${sm}</td>
+    <td>${v.t.toLocaleString('pt-BR')}</td><td>${sg}</td></tr>`}).join('')+`</tbody>`;
+  const labs=m.map(v=>v.a.split(' ')[0]);
+  mkBar('cstmr',labs,m.map(v=>v.tmr),m.map(v=>v.tmr===null?'transparent':v.tmr<=24?pc(1,'.85'):v.tmr<=36?pc(3,'.8'):pc(6,'.85')),
+    {line:{lbl:'24h',v:24,c:'rgba(79,142,247,.7)'},legend:true});
+  mkBar('cstfr',labs,m.map(v=>v.tfr),m.map(v=>v.tfr===null?'transparent':v.tfr<=15?pc(1,'.85'):v.tfr<=30?pc(3,'.8'):pc(6,'.85')),
+    {line:{lbl:'30min',v:30,c:'rgba(224,92,92,.7)'},legend:true});
 }
 
-// ═══════════════════════════════════════════════════════════
-//  CATEGORIAS
-// ═══════════════════════════════════════════════════════════
-function renderCategorias(fd) {
-  const top = computeTopLabels(fd, 15);
-  const totalLabels = top.reduce((s,r)=>s+r[1],0);
-  const max = top[0]?.[1] || 1;
-
-  if (top.length === 0) {
-    document.getElementById('info-labels').innerHTML = '<strong>Sem dados:</strong> Nenhuma categoria encontrada no período selecionado.';
-    document.getElementById('tbl-labels').innerHTML = '';
-    destroyChart('chart-labels'); destroyChart('chart-grupos');
-    return;
+// ═══════ INIT ═══════
+window.addEventListener('DOMContentLoaded',()=>{
+  if(typeof SUPORTE_DATA==='undefined'){
+    document.body.innerHTML=`<div style="padding:60px;text-align:center;color:#7b8bb2">
+      <p style="font-size:28px;margin-bottom:12px">⚠️</p>
+      <p style="font-size:14px"><strong>data.js não encontrado</strong></p>
+      <p style="margin-top:8px;font-size:12px">Execute <code style="background:#161926;padding:2px 8px;border-radius:4px">python extract_data.py</code> para gerar os dados.</p>
+    </div>`;return;
   }
-
-  const top2 = top.slice(0,2).map(r=>r[0]).join(' e ');
-  const top2pct = top.slice(0,2).reduce((s,r)=>s+r[1],0);
-  document.getElementById('info-labels').innerHTML =
-    `<strong>Insight:</strong> "${top2}" = ${(top2pct/totalLabels*100).toFixed(0)}% das categorias — candidatos ideais para autoatendimento.`;
-
-  makeBar('chart-labels',
-    top.map(r=>r[0]),
-    top.map(r=>r[1]),
-    top.map((_,i)=>palColor(i,'0.8')),
-    { horizontal: true }
-  );
-
-  // Grupos temáticos
-  const grupos = {
-    'Inatividade/Backup': top.filter(r=>r[0].includes('inativ')||r[0].includes('backup')).reduce((s,r)=>s+r[1],0),
-    'Fiscal/XML/NF': top.filter(r=>r[0].includes('xml')||r[0].includes('nf')||r[0].includes('fiscal')||r[0].includes('nota')||r[0].includes('nfce')).reduce((s,r)=>s+r[1],0),
-    'Financeiro': top.filter(r=>r[0].includes('financ')||r[0].includes('boleto')).reduce((s,r)=>s+r[1],0),
-    'Orçamento/Pedidos': top.filter(r=>r[0].includes('or')||r[0].includes('pedido')).reduce((s,r)=>s+r[1],0),
-    'Outros': top.filter(r=>!r[0].includes('inativ')&&!r[0].includes('backup')&&!r[0].includes('xml')&&!r[0].includes('nf')&&!r[0].includes('nota')&&!r[0].includes('financ')&&!r[0].includes('boleto')&&!r[0].includes('or')&&!r[0].includes('pedido')).reduce((s,r)=>s+r[1],0),
-  };
-  const gEntries = Object.entries(grupos).filter(r=>r[1]>0);
-  makeDoughnut('chart-grupos',
-    gEntries.map(r=>r[0]),
-    gEntries.map(r=>r[1]),
-    gEntries.map((_,i)=>palColor(i,'0.85'))
-  );
-
-  document.getElementById('tbl-labels').innerHTML = `
-    <thead><tr><th>Categoria</th><th>Conversas</th><th>% do Total</th><th>Distribuição</th></tr></thead>
-    <tbody>${top.map(([l,t])=>`
-      <tr><td>${l}</td><td><strong>${t.toLocaleString('pt-BR')}</strong></td>
-      <td>${(t/totalLabels*100).toFixed(1)}%</td>
-      <td><div class="progress-bar"><div class="progress-fill" style="width:${(t/max*100).toFixed(1)}%;background:var(--blue)"></div></div></td>
-      </tr>`).join('')}
-    </tbody>`;
-}
-
-// ═══════════════════════════════════════════════════════════
-//  PADRÕES
-// ═══════════════════════════════════════════════════════════
-function renderPadroes(fd, gran) {
-  const {horas, dow} = computeHorasDow(fd);
-  const days = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-
-  const peakHour = horas.indexOf(Math.max(...horas));
-  const peakDay  = days[dow.indexOf(Math.max(...dow))];
-
-  // Hora
-  makeLine('chart-hora',
-    Array.from({length:24},(_,i)=>i+'h'),
-    [{
-      label:'Conversas',
-      data: horas,
-      borderColor:'rgba(79,142,247,1)',
-      backgroundColor:'rgba(79,142,247,0.12)',
-      tension:0.35, fill:true, pointRadius:3,
-      pointBackgroundColor:'rgba(79,142,247,1)'
-    }]
-  );
-
-  // DOW
-  makeBar('chart-dow',
-    days, dow,
-    dow.map((v,i)=>v===Math.max(...dow)?'rgba(79,142,247,0.95)':i===0||i===6?'rgba(148,163,184,0.4)':'rgba(79,142,247,0.65)')
-  );
-
-  // Tendência diária
-  const byDay = computeByPeriod(fd, gran);
-  const granLabel = gran==='day'?'diária':gran==='week'?'semanal':'mensal';
-  document.getElementById('lbl-tendencia').textContent = `Agrupamento ${granLabel}`;
-  makeLine('chart-tendencia',
-    byDay.map(r=>r[0]),
-    [{
-      label:'Conversas',
-      data:byDay.map(r=>r[1]),
-      borderColor:'rgba(34,211,160,1)',
-      backgroundColor:'rgba(34,211,160,0.1)',
-      tension:0.25, fill:true, pointRadius: byDay.length>30?0:4,
-      pointBackgroundColor:'rgba(34,211,160,1)'
-    }]
-  );
-}
-
-// ═══════════════════════════════════════════════════════════
-//  SLA
-// ═══════════════════════════════════════════════════════════
-function renderSLA(fd) {
-  const metrics = computeAgentMetrics(fd);
-  const validTfr = metrics.filter(m=>m.tfr!==null);
-  const validTmr = metrics.filter(m=>m.tmr!==null);
-  const avgTfr = validTfr.length ? +(validTfr.reduce((s,m)=>s+m.tfr,0)/validTfr.length).toFixed(1) : 0;
-  const avgTmr = validTmr.length ? +(validTmr.reduce((s,m)=>s+m.tmr,0)/validTmr.length).toFixed(1) : 0;
-  const bestTmr = validTmr.reduce((best,m)=>(!best||m.tmr<best.tmr)?m:best, null);
-  const worstTmr = validTmr.reduce((worst,m)=>(!worst||m.tmr>worst.tmr)?m:worst, null);
-
-  document.getElementById('kpi-sla').innerHTML = `
-    <div class="kpi-card ${avgTmr<=24?'green':'yellow'}"><div class="kpi-label">TMR Médio</div><div class="kpi-value">${avgTmr}h</div><div class="kpi-sub">Tempo médio resolução</div><span class="kpi-badge ${avgTmr<=24?'up':'neutral'}">Meta: &lt;24h</span></div>
-    <div class="kpi-card ${avgTfr<=30?'green':'yellow'}"><div class="kpi-label">TFR Médio</div><div class="kpi-value">${avgTfr}min</div><div class="kpi-sub">Primeira resposta</div><span class="kpi-badge ${avgTfr<=30?'up':'down'}">Meta: &lt;30min</span></div>
-    ${bestTmr?`<div class="kpi-card green"><div class="kpi-label">Melhor TMR</div><div class="kpi-value">${bestTmr.tmr}h</div><div class="kpi-sub">${bestTmr.ag.split(' ')[0]}</div><span class="kpi-badge up">Referência</span></div>`:''}
-    ${worstTmr?`<div class="kpi-card ${worstTmr.tmr>24?'red':'yellow'}"><div class="kpi-label">Maior TMR</div><div class="kpi-value">${worstTmr.tmr}h</div><div class="kpi-sub">${worstTmr.ag.split(' ')[0]}</div><span class="kpi-badge ${worstTmr.tmr>24?'down':'neutral'}">${worstTmr.tmr>24?'Acima do SLA':'Dentro'}</span></div>`:''}
-  `;
-
-  // SLA Table
-  const slaRow = m => {
-    const slaT = m.tfr!==null?(m.tfr<=30?'<span class="badge-g">OK</span>':'<span class="badge-y">Atenção</span>'):'—';
-    const slaM = m.tmr!==null?(m.tmr<=24?'<span class="badge-g">Dentro</span>':m.tmr<=36?'<span class="badge-y">Atenção</span>':'<span class="badge-r">Violação</span>'):'—';
-    const geral = (!m.tmr||(m.tmr<=24&&(!m.tfr||m.tfr<=30)))?'<span class="badge-g">Bom</span>':(m.tmr>36)?'<span class="badge-r">Crítico</span>':'<span class="badge-y">Atenção</span>';
-    return `<tr><td><strong>${m.ag}</strong></td><td>${m.tfr!==null?(m.tfr<1?'&lt;1 min':m.tfr+' min'):'—'}</td><td>${slaT}</td><td>${m.tmr!==null?m.tmr+'h':'—'}</td><td>${slaM}</td><td>${m.t.toLocaleString('pt-BR')}</td><td>${geral}</td></tr>`;
-  };
-  document.getElementById('tbl-sla').innerHTML = `
-    <thead><tr><th>Agente</th><th>TFR</th><th>Status TFR</th><th>TMR</th><th>Status TMR</th><th>Conversas</th><th>Avaliação Geral</th></tr></thead>
-    <tbody>${metrics.map(slaRow).join('')}</tbody>`;
-
-  const labels = metrics.map(m=>m.ag.split(' ')[0]);
-
-  makeBar('chart-sla-tmr', labels,
-    metrics.map(m=>m.tmr),
-    metrics.map(m=>m.tmr===null?'transparent':m.tmr<=24?'rgba(34,211,160,0.85)':m.tmr<=36?'rgba(251,191,36,0.8)':'rgba(248,113,113,0.85)'),
-    { line:{label:'Meta 24h', value:24, color:'rgba(79,142,247,0.9)'}, showLegend:true }
-  );
-
-  makeBar('chart-sla-tfr', labels,
-    metrics.map(m=>m.tfr),
-    metrics.map(m=>m.tfr===null?'transparent':m.tfr<=15?'rgba(34,211,160,0.85)':m.tfr<=30?'rgba(251,191,36,0.8)':'rgba(248,113,113,0.85)'),
-    { line:{label:'Meta 30min', value:30, color:'rgba(248,113,113,0.9)'}, showLegend:true }
-  );
-}
-
-// ═══════════════════════════════════════════════════════════
-//  INIT
-// ═══════════════════════════════════════════════════════════
-window.addEventListener('DOMContentLoaded', () => {
-  if (typeof SUPORTE_DATA === 'undefined') {
-    document.body.innerHTML = `<div style="padding:60px;text-align:center;color:#94a3b8;font-size:16px">
-      <p style="font-size:32px;margin-bottom:16px">⚠️</p>
-      <p><strong>data.js não encontrado</strong></p>
-      <p style="margin-top:8px">Execute <code style="background:#1a1d2e;padding:2px 8px;border-radius:4px">python extract_data.py</code> para gerar os dados.</p>
-    </div>`;
-    return;
-  }
-
-  const dt = new Date(SUPORTE_DATA.extraido_em);
-  document.getElementById('update-time').textContent =
-    'Atualizado: ' + dt.toLocaleDateString('pt-BR') + ' ' + dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-
+  const dt=new Date(SUPORTE_DATA.extraido_em);
+  document.getElementById('uptime').textContent=
+    'Atualizado: '+dt.toLocaleDateString('pt-BR')+' '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   // Inicia com mês anterior
-  quickFilter('lastmonth');
-  document.querySelector('.qbtn[onclick="quickFilter(\'lastmonth\')"]').classList.add('active');
+  document.querySelector('[data-f="lastmonth"]').click();
 });
 </script>
-
 </body>
 </html>

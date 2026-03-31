@@ -1,5 +1,4 @@
 dados_suporte.json
-extract_data.py
 atualizar.py
 *.pyc
 __pycache__/
