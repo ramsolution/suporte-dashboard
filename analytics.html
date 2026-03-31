@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Analytics Gerencial — Sistema RAM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <script src="data.js"></script>
+  <style>
+    :root{
+      --bg:#0b0e1a;--card:#111520;--card2:#181d2e;--border:#1f2540;
+      --text:#e2e8f8;--text2:#6b7a9e;--text3:#8fa0c0;
+      --blue:#5b9bff;--green:#1fd691;--yellow:#f5b227;--red:#f06060;
+      --purple:#a07ef8;--orange:#f08450;--teal:#22d4d4;
+
+      --color-surface:var(--bg);--color-surface-card:var(--card);
+      --color-border:var(--border);--color-accent:var(--blue);
+      --color-success:var(--green);--color-warning:var(--yellow);--color-danger:var(--red);
+      --blue-glow:rgba(91,155,255,.15);--green-glow:rgba(31,214,145,.15);
+      --yellow-glow:rgba(245,178,39,.15);--red-glow:rgba(240,96,96,.15);
+
+      --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;
+      --space-5:20px;--space-6:24px;--space-7:28px;--space-8:32px;
+      --text-xs:9px;--text-sm:11px;--text-md:13px;--text-lg:15px;--text-xl:18px;
+      --shadow:0 2px 12px rgba(0,0,0,.35);
+      --shadow-sm:0 1px 4px rgba(0,0,0,.25);
+      --shadow-md:0 4px 20px rgba(0,0,0,.45);
+      --radius:10px;--radius-sm:6px;--radius-xs:4px;--radius-pill:20px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;font-size:13px;line-height:1.5;animation:fadeIn .3s ease}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+    ::-webkit-scrollbar{width:6px;height:6px}
+    ::-webkit-scrollbar-track{background:var(--bg)}
+    ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+    ::-webkit-scrollbar-thumb:hover{background:var(--text2)}
+
+    /* ── HEADER ── */
+    header{
+      background:linear-gradient(135deg,#0d1630 0%,#111520 60%,#0f1a28 100%);
+      border-bottom:1px solid var(--border);padding:14px 28px;
+      display:flex;align-items:center;justify-content:space-between;
+      box-shadow:0 2px 16px rgba(0,0,0,.4);position:sticky;top:0;z-index:100;
+    }
+    .hd-left{display:flex;align-items:center;gap:14px}
+    .hd-logo{
+      width:38px;height:38px;
+      background:linear-gradient(135deg,var(--purple) 0%,var(--blue) 100%);
+      border-radius:10px;display:flex;align-items:center;justify-content:center;
+      font-size:18px;flex-shrink:0;box-shadow:0 2px 12px rgba(160,126,248,.3);
+    }
+    .hd-title h1{font-size:15px;font-weight:700;letter-spacing:-0.02em}
+    .hd-title p{font-size:11px;color:var(--text2);margin-top:2px}
+    .hd-right{display:flex;align-items:center;gap:10px}
+    .live{
+      background:rgba(31,214,145,.1);border:1px solid rgba(31,214,145,.35);
+      color:var(--green);padding:3px 12px;border-radius:20px;font-size:10px;
+      font-weight:700;letter-spacing:.06em;display:flex;align-items:center;gap:5px;
+    }
+    .live::before{content:'';width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2s ease infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+    .back-btn{
+      background:rgba(91,155,255,.1);border:1px solid rgba(91,155,255,.3);
+      color:var(--blue);padding:5px 14px;border-radius:var(--radius-pill);font-size:11px;
+      font-weight:600;cursor:pointer;text-decoration:none;display:flex;align-items:center;gap:6px;
+      transition:all .2s;font-family:'Inter',sans-serif;
+    }
+    .back-btn:hover{background:rgba(91,155,255,.2);border-color:var(--blue)}
+    #upd{font-size:11px;color:var(--text2)}
+
+    /* ── FILTER BAR ── */
+    .fbar{
+      background:var(--card);border-bottom:1px solid var(--border);
+      padding:10px 28px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    }
+    .flabel{font-size:11px;color:var(--text2);font-weight:600;letter-spacing:.03em;text-transform:uppercase;white-space:nowrap}
+    .qbtns{display:flex;gap:4px;flex-wrap:wrap}
+    .qb{
+      background:transparent;border:1px solid var(--border);color:var(--text2);
+      padding:5px 12px;border-radius:var(--radius-pill);font-size:11px;cursor:pointer;
+      font-family:'Inter',sans-serif;transition:all .2s;white-space:nowrap;font-weight:500;
+    }
+    .qb:hover{border-color:var(--blue);color:var(--text);background:var(--blue-glow)}
+    .qb.on{background:var(--blue-glow);border-color:var(--blue);color:var(--blue);font-weight:600}
+    .qb:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+    .fsep{color:var(--border);font-size:18px}
+    .pdisplay{
+      margin-left:auto;font-size:11px;color:var(--text2);font-weight:500;
+      background:var(--card2);padding:4px 12px;border-radius:20px;border:1px solid var(--border);
+    }
+
+    /* ── MAIN ── */
+    main{padding:24px 28px;max-width:1600px;margin:0 auto}
+
+    /* ── SECTION HEADER ── */
+    .sh{
+      display:flex;align-items:center;gap:10px;margin-bottom:16px;
+      padding-bottom:10px;border-bottom:1px solid var(--border);
+    }
+    .sh-icon{
+      width:30px;height:30px;border-radius:8px;display:flex;align-items:center;
+      justify-content:center;font-size:14px;flex-shrink:0;
+    }
+    .sh-icon.bl{background:rgba(91,155,255,.15)}
+    .sh-icon.gr{background:rgba(31,214,145,.15)}
+    .sh-icon.ye{background:rgba(245,178,39,.15)}
+    .sh-icon.pu{background:rgba(160,126,248,.15)}
+    .sh-icon.re{background:rgba(240,96,96,.15)}
+    .sh h2{font-size:14px;font-weight:700;letter-spacing:-.01em}
+    .sh span{font-size:11px;color:var(--text2);font-weight:400}
+    .section{margin-bottom:32px}
+
+    /* ── KPI CARDS ── */
+    .kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px}
+    .kc{
+      background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+      padding:14px 16px;position:relative;overflow:hidden;
+      transition:transform .2s,box-shadow .2s;box-shadow:var(--shadow-sm);
+    }
+    .kc:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+    .kc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+    .kc::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;opacity:.04;pointer-events:none}
+    .kc.bl::before{background:linear-gradient(90deg,var(--blue),var(--purple))}
+    .kc.bl::after{background:var(--blue)}
+    .kc.gr::before{background:linear-gradient(90deg,var(--green),var(--teal))}
+    .kc.gr::after{background:var(--green)}
+    .kc.ye::before{background:linear-gradient(90deg,var(--yellow),var(--orange))}
+    .kc.ye::after{background:var(--yellow)}
+    .kc.re::before{background:linear-gradient(90deg,var(--red),var(--orange))}
+    .kc.re::after{background:var(--red)}
+    .kc.pu::before{background:linear-gradient(90deg,var(--purple),var(--blue))}
+    .kc.pu::after{background:var(--purple)}
+    .kl{font-size:9px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.1em}
+    .kv{font-size:30px;font-weight:800;margin:6px 0 3px;line-height:1;letter-spacing:-.03em}
+    .ks{font-size:10px;color:var(--text2)}
+    .kb{
+      display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;
+      font-size:9px;font-weight:700;margin-top:5px;letter-spacing:.03em;
+    }
+    .kb.ok{background:rgba(31,214,145,.12);color:var(--green);border:1px solid rgba(31,214,145,.2)}
+    .kb.warn{background:rgba(245,178,39,.12);color:var(--yellow);border:1px solid rgba(245,178,39,.2)}
+    .kb.crit{background:rgba(240,96,96,.12);color:var(--red);border:1px solid rgba(240,96,96,.2)}
+
+    /* ── GRID ── */
+    .grid{display:grid;gap:14px;margin-bottom:16px}
+    .g2{grid-template-columns:1fr 1fr}
+    .g3{grid-template-columns:1fr 1fr 1fr}
+    .g21{grid-template-columns:2fr 1fr}
+    .g12{grid-template-columns:1fr 2fr}
+    .gw{grid-column:1/-1}
+
+    /* ── CHART CARD ── */
+    .cc{
+      background:var(--card);border:1px solid var(--border);
+      border-radius:var(--radius);padding:16px;box-shadow:var(--shadow-sm);
+      transition:box-shadow .2s;
+    }
+    .cc:hover{box-shadow:var(--shadow)}
+    .ct{
+      font-size:12px;font-weight:600;color:var(--text);letter-spacing:-.01em;
+      padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:12px;
+      display:flex;align-items:center;gap:6px;
+    }
+    .ct span{color:var(--text2);font-weight:400;font-size:10px;margin-left:auto}
+
+    /* ── TABLE ── */
+    .dt{width:100%;border-collapse:collapse}
+    .dt th{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;padding:8px 10px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;font-weight:600}
+    .dt td{padding:8px 10px;border-bottom:1px solid rgba(31,37,64,.6);font-size:12px}
+    .dt tr:nth-child(even) td{background:rgba(255,255,255,.015)}
+    .dt tr:last-child td{border-bottom:none}
+    .dt tr:hover td{background:rgba(91,155,255,.05);transition:background .15s}
+
+    /* ── BADGES ── */
+    .bg{background:rgba(31,214,145,.12);color:var(--green);padding:2px 10px;border-radius:20px;font-size:10px;font-weight:600;border:1px solid rgba(31,214,145,.2)}
+    .by{background:rgba(245,178,39,.12);color:var(--yellow);padding:2px 10px;border-radius:20px;font-size:10px;font-weight:600;border:1px solid rgba(245,178,39,.2)}
+    .br{background:rgba(240,96,96,.12);color:var(--red);padding:2px 10px;border-radius:20px;font-size:10px;font-weight:600;border:1px solid rgba(240,96,96,.2)}
+
+    /* ── PROGRESS ── */
+    .pb{background:rgba(31,37,64,.8);border-radius:4px;height:5px;margin-top:6px}
+    .pf{height:5px;border-radius:4px}
+
+    /* ── FINDING CARD ── */
+    .finding{
+      background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+      padding:14px 16px;box-shadow:var(--shadow-sm);border-left:3px solid var(--border);
+      transition:box-shadow .2s;
+    }
+    .finding:hover{box-shadow:var(--shadow)}
+    .finding.crit{border-left-color:var(--red)}
+    .finding.warn{border-left-color:var(--yellow)}
+    .finding.ok{border-left-color:var(--green)}
+    .finding.info{border-left-color:var(--blue)}
+    .finding h4{font-size:12px;font-weight:700;margin-bottom:6px;letter-spacing:-.01em}
+    .finding p{font-size:11px;color:var(--text2);line-height:1.6}
+    .finding .f-tag{font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 8px;border-radius:20px;margin-bottom:8px;display:inline-block}
+    .finding.crit .f-tag{background:rgba(240,96,96,.12);color:var(--red)}
+    .finding.warn .f-tag{background:rgba(245,178,39,.12);color:var(--yellow)}
+    .finding.ok   .f-tag{background:rgba(31,214,145,.12);color:var(--green)}
+    .finding.info .f-tag{background:rgba(91,155,255,.12);color:var(--blue)}
+    .finding .f-rec{
+      margin-top:8px;padding:8px 10px;background:rgba(255,255,255,.03);
+      border-radius:var(--radius-sm);font-size:11px;color:var(--text3);
+      border:1px solid rgba(255,255,255,.06);
+    }
+    .finding .f-rec strong{color:var(--text2)}
+
+    /* ── HEATMAP ── */
+    .hm-wrap{overflow-x:auto}
+    .hm{border-collapse:collapse;width:100%;min-width:520px}
+    .hm th{font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;padding:4px 6px;text-align:center;font-weight:600}
+    .hm td{width:36px;height:28px;border-radius:4px;text-align:center;font-size:9px;font-weight:600;transition:opacity .2s;cursor:default}
+    .hm td:hover{opacity:.8;outline:1px solid rgba(255,255,255,.2)}
+    .hm .row-label{font-size:10px;color:var(--text2);text-align:right;padding-right:10px;font-weight:500;white-space:nowrap}
+    .hm-legend{display:flex;align-items:center;gap:6px;margin-top:10px;font-size:10px;color:var(--text2)}
+    .hm-legend-bar{display:flex;gap:2px}
+    .hm-swatch{width:20px;height:10px;border-radius:2px}
+
+    /* ── ALERT/INFO BOXES ── */
+    .alert{background:rgba(240,96,96,.07);border:1px solid rgba(240,96,96,.25);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px;font-size:12px;border-left:3px solid var(--red)}
+    .alert strong{color:var(--red)}
+    .infobox{background:rgba(91,155,255,.07);border:1px solid rgba(91,155,255,.25);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px;font-size:12px;border-left:3px solid var(--blue)}
+    .infobox strong{color:var(--blue)}
+
+    /* ── RESPONSIVE ── */
+    @media(max-width:1200px){.kpi-row{grid-template-columns:repeat(3,1fr)}}
+    @media(max-width:900px){.g2,.g3,.g21,.g12{grid-template-columns:1fr}.kpi-row{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:600px){main{padding:14px 16px}.fbar{padding:10px 16px}header{padding:12px 16px}.kpi-row{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="hd-left">
+    <div class="hd-logo">📈</div>
+    <div class="hd-title">
+      <h1>Analytics Gerencial — Sistema RAM</h1>
+      <p>Suporte Chatwoot · análise completa · atualização automática a cada 15 min</p>
+    </div>
+  </div>
+  <div class="hd-right">
+    <a href="index.html" class="back-btn">← Dashboard Operacional</a>
+    <div class="live">AO VIVO</div>
+    <div id="upd">—</div>
+  </div>
+</header>
+
+<!-- FILTRO DE PERÍODO -->
+<div class="fbar">
+  <span class="flabel">Período:</span>
+  <div class="qbtns">
+    <button class="qb" onclick="qf(this,'week')">Esta semana</button>
+    <button class="qb" onclick="qf(this,'lastweek')">Semana anterior</button>
+    <button class="qb" onclick="qf(this,'month')">Este mês</button>
+    <button class="qb on" onclick="qf(this,'all')">Todo período</button>
+  </div>
+  <div id="pdisplay" class="pdisplay">—</div>
+</div>
+
+<main>
+
+  <!-- KPI HEROES -->
+  <div class="kpi-row" id="kpi-row"></div>
+
+  <!-- 1. TENDÊNCIA DE VOLUME -->
+  <div class="section">
+    <div class="sh">
+      <div class="sh-icon bl">📅</div>
+      <div><h2>Tendência de Volume</h2><span>Conversas abertas por mês e por agente</span></div>
+    </div>
+    <div class="grid g21">
+      <div class="cc">
+        <div class="ct">Evolução mensal de conversas <span id="vol-total-label"></span></div>
+        <canvas id="chart-vol-mensal" height="200"></canvas>
+      </div>
+      <div class="cc">
+        <div class="ct">Volume por dia da semana <span>média por dia</span></div>
+        <canvas id="chart-dow" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. PERFORMANCE POR AGENTE -->
+  <div class="section">
+    <div class="sh">
+      <div class="sh-icon pu">👤</div>
+      <div><h2>Performance por Agente</h2><span>Volume, TMR e taxa de resolução individuais</span></div>
+    </div>
+    <div class="grid g3">
+      <div class="cc">
+        <div class="ct">TMR médio por agente (horas) <span id="tmr-meta-label"></span></div>
+        <canvas id="chart-tmr" height="220"></canvas>
+      </div>
+      <div class="cc">
+        <div class="ct">Volume de conversas por agente <span id="ag-periodo-label"></span></div>
+        <canvas id="chart-vol-agente" height="220"></canvas>
+      </div>
+      <div class="cc">
+        <div class="ct">Taxa de resolução por agente</div>
+        <div id="resolucao-table"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. SATISFAÇÃO DO CLIENTE -->
+  <div class="section">
+    <div class="sh">
+      <div class="sh-icon gr">⭐</div>
+      <div><h2>Satisfação do Cliente (CSAT)</h2><span>Ratings e evolução da satisfação</span></div>
+    </div>
+    <div class="grid g3">
+      <div class="cc">
+        <div class="ct">Distribuição de ratings</div>
+        <canvas id="chart-csat-dist" height="200"></canvas>
+      </div>
+      <div class="cc">
+        <div class="ct">CSAT médio por agente <span>nota /5</span></div>
+        <canvas id="chart-csat-agente" height="200"></canvas>
+      </div>
+      <div class="cc">
+        <div class="ct">Evolução do CSAT (média mensal)</div>
+        <canvas id="chart-csat-trend" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. CATEGORIAS -->
+  <div class="section">
+    <div class="sh">
+      <div class="sh-icon ye">🏷️</div>
+      <div><h2>Categorias de Atendimento</h2><span>Labels mais frequentes — candidatos à automação</span></div>
+    </div>
+    <div class="grid g21">
+      <div class="cc">
+        <div class="ct">Top 12 labels por volume <span>% do total categorizado</span></div>
+        <canvas id="chart-labels" height="260"></canvas>
+      </div>
+      <div class="cc">
+        <div class="ct">Resumo de categorias</div>
+        <div id="labels-table"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. PADRÕES DE DEMANDA -->
+  <div class="section">
+    <div class="sh">
+      <div class="sh-icon re">⏰</div>
+      <div><h2>Padrões de Demanda</h2><span>Horas e dias com maior concentração de atendimentos</span></div>
+    </div>
+    <div class="grid g2">
+      <div class="cc">
+        <div class="ct">Heatmap hora × dia da semana <span>volume de conversas</span></div>
+        <div class="hm-wrap" id="heatmap-wrap"></div>
+        <div class="hm-legend">
+          <span>Menor</span>
+          <div class="hm-legend-bar" id="hm-legend-bar"></div>
+          <span>Maior</span>
+        </div>
+      </div>
+      <div class="cc">
+        <div class="ct">Volume por hora do dia <span>total acumulado</span></div>
+        <canvas id="chart-hora" height="240"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. FINDINGS & RECOMENDAÇÕES -->
+  <div class="section">
+    <div class="sh">
+      <div class="sh-icon bl">💡</div>
+      <div><h2>Findings & Recomendações</h2><span>Análise gerada pelo Support Analytics Squad em 31/03/2026</span></div>
+    </div>
+    <div class="grid g3" id="findings-grid"></div>
+  </div>
+
+</main>
+
+<script>
+// ─── CONSTANTS ────────────────────────────────────────────────────
+const D  = (typeof SUPORTE_DATA !== 'undefined') ? SUPORTE_DATA : null;
+const SLA_TMR_H = 24;
+const CHART_COLORS = ['#5b9bff','#1fd691','#f5b227','#f06060','#a07ef8','#f08450','#22d4d4','#fb923c'];
+const DOW_NAMES = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const MONTH_NAMES = {1:'Jan',2:'Fev',3:'Mar',4:'Abr',5:'Mai',6:'Jun',7:'Jul',8:'Ago',9:'Set',10:'Out',11:'Nov',12:'Dez'};
+
+let CHARTS = {};
+let CURRENT_FILTER = 'all';
+
+// ─── PERIOD FILTER ────────────────────────────────────────────────
+function dateRange(f) {
+  const now = new Date();
+  const iso = d => d.toISOString().split('T')[0];
+  const d = n => { const x=new Date(now); x.setDate(x.getDate()+n); return x; };
+  if(f==='week'){
+    const mon=new Date(now); mon.setDate(now.getDate()-((now.getDay()+6)%7));
+    return [iso(mon), iso(now)];
+  }
+  if(f==='lastweek'){
+    const mon=new Date(now); mon.setDate(now.getDate()-((now.getDay()+6)%7)-7);
+    const sun=new Date(mon); sun.setDate(mon.getDate()+6);
+    return [iso(mon), iso(sun)];
+  }
+  if(f==='month'){
+    return [iso(new Date(now.getFullYear(),now.getMonth(),1)), iso(now)];
+  }
+  return ['2000-01-01', iso(now)];
+}
+
+function qf(btn, f) {
+  document.querySelectorAll('.qb').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  CURRENT_FILTER = f;
+  render();
+}
+
+function inRange(dateStr, range) {
+  return dateStr >= range[0] && dateStr <= range[1];
+}
+
+function fmtRange(range) {
+  const fmt = s => { const p=s.split('-'); return `${p[2]}/${p[1]}/${p[0]}`; };
+  return `${fmt(range[0])} → ${fmt(range[1])}`;
+}
+
+// ─── DATA HELPERS ─────────────────────────────────────────────────
+function aggrByMonth(rows, range) {
+  const m = {};
+  rows.forEach(r => {
+    if(!inRange(r.d, range)) return;
+    const k = r.d.slice(0,7);
+    if(!m[k]) m[k] = {t:0, res:0};
+    m[k].t   += (r.t   || 0);
+    m[k].res += (r.res || 0);
+  });
+  return Object.entries(m).sort((a,b)=>a[0]<b[0]?-1:1);
+}
+
+function aggrByAgent(rows, range) {
+  const m = {};
+  rows.forEach(r => {
+    if(!inRange(r.d, range)) return;
+    const k = r.ag;
+    if(!m[k]) m[k] = {t:0, res:0};
+    m[k].t   += (r.t   || 0);
+    m[k].res += (r.res || 0);
+  });
+  return Object.entries(m)
+    .filter(([ag])=>ag!=='Nao atribuido' && ag!=='Sistema RAM' && ag!=='rodrigo' && ag!=='Carlos Lauriano')
+    .sort((a,b)=>b[1].t-a[1].t);
+}
+
+function aggrTMR(rows, range) {
+  const m = {};
+  rows.forEach(r => {
+    if(!inRange(r.d, range) || r.ev !== 'conversation_resolved') return;
+    const k = r.ag;
+    if(k === 'N/A' || k === 'Sistema RAM') return;
+    if(!m[k]) m[k] = {sum:0, n:0};
+    m[k].sum += r.s * r.t;
+    m[k].n   += r.t;
+  });
+  return Object.entries(m)
+    .filter(([,v])=>v.n>=5)
+    .map(([ag,v])=>({ ag, h: v.sum/v.n/3600 }))
+    .sort((a,b)=>a.h-b.h);
+}
+
+function aggrCSATByAgent(rows, range) {
+  const m = {};
+  rows.forEach(r => {
+    if(!inRange(r.d, range)) return;
+    const k = r.ag;
+    if(!m[k]) m[k] = {sum:0, n:0};
+    m[k].sum += r.m * r.t;
+    m[k].n   += r.t;
+  });
+  return Object.entries(m)
+    .filter(([ag,v])=>ag!=='N/A' && v.n>=5)
+    .map(([ag,v])=>({ ag, m: v.sum/v.n, n: v.n }))
+    .sort((a,b)=>b.m-a.m);
+}
+
+function aggrCSATByMonth(rows, range) {
+  const m = {};
+  rows.forEach(r => {
+    if(!inRange(r.d, range)) return;
+    const k = r.d.slice(0,7);
+    if(!m[k]) m[k] = {sum:0, n:0};
+    m[k].sum += r.m * r.t;
+    m[k].n   += r.t;
+  });
+  return Object.entries(m).sort((a,b)=>a[0]<b[0]?-1:1)
+    .map(([k,v])=>({ k, m: v.sum/v.n, n: v.n }));
+}
+
+function aggrLabels(rows, range) {
+  const m = {};
+  rows.forEach(r => {
+    if(!inRange(r.d, range)) return;
+    const k = r.l.trim();
+    if(!k) return;
+    m[k] = (m[k]||0) + r.t;
+  });
+  return Object.entries(m).sort((a,b)=>b[1]-a[1]);
+}
+
+function aggrHeatmap(rows, range) {
+  const m = {};
+  rows.forEach(r => {
+    if(!inRange(r.d, range)) return;
+    const k = `${r.h}|${r.dow}`;
+    m[k] = (m[k]||0) + r.t;
+  });
+  return m;
+}
+
+function aggrHora(rows, range) {
+  const m = new Array(24).fill(0);
+  rows.forEach(r => {
+    if(!inRange(r.d, range)) return;
+    m[r.h] += r.t;
+  });
+  return m;
+}
+
+function aggrDOW(rows, range) {
+  const m = new Array(7).fill(0);
+  rows.forEach(r => {
+    if(!inRange(r.d, range)) return;
+    m[r.dow] += r.t;
+  });
+  return m;
+}
+
+// ─── CHART FACTORY ────────────────────────────────────────────────
+const CHART_DEFAULTS = {
+  responsive: true,
+  maintainAspectRatio: true,
+  plugins: {
+    legend: { labels: { color:'#6b7a9e', font:{family:'Inter',size:11}, boxWidth:12, padding:16 } },
+    tooltip: { backgroundColor:'#181d2e', borderColor:'#1f2540', borderWidth:1,
+      titleColor:'#e2e8f8', bodyColor:'#8fa0c0', titleFont:{family:'Inter',weight:600},
+      bodyFont:{family:'Inter'}, padding:10, cornerRadius:8, displayColors:true }
+  },
+  scales: {
+    x: { ticks:{color:'#6b7a9e',font:{family:'Inter',size:10}}, grid:{color:'rgba(31,37,64,.6)'} },
+    y: { ticks:{color:'#6b7a9e',font:{family:'Inter',size:10}}, grid:{color:'rgba(31,37,64,.6)'} }
+  }
+};
+
+function mk(id, type, data, opts={}) {
+  const canvas = document.getElementById(id);
+  if(!canvas) return;
+  if(CHARTS[id]) CHARTS[id].destroy();
+  CHARTS[id] = new Chart(canvas, {
+    type, data,
+    options: deepMerge(JSON.parse(JSON.stringify(CHART_DEFAULTS)), opts)
+  });
+}
+
+function deepMerge(a, b) {
+  for(const k in b) {
+    if(b[k] && typeof b[k]==='object' && !Array.isArray(b[k])) {
+      a[k] = deepMerge(a[k]||{}, b[k]);
+    } else { a[k]=b[k]; }
+  }
+  return a;
+}
+
+function monthLabel(k) {
+  const [y,m] = k.split('-');
+  return `${MONTH_NAMES[+m]}/${y.slice(2)}`;
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────
+function render() {
+  if(!D) { document.body.innerHTML='<div style="padding:40px;color:#f06060;font-family:Inter">Dados não encontrados. Execute extract_data.py primeiro.</div>'; return; }
+
+  const range = dateRange(CURRENT_FILTER);
+  document.getElementById('pdisplay').textContent = fmtRange(range);
+
+  // Timestamp
+  if(D.extraido_em) {
+    const dt = new Date(D.extraido_em);
+    document.getElementById('upd').textContent =
+      'Atualizado: ' + dt.toLocaleDateString('pt-BR') + ' ' +
+      dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  }
+
+  renderKPIs(range);
+  renderVolMensal(range);
+  renderDOW(range);
+  renderTMR(range);
+  renderVolAgente(range);
+  renderResolucao(range);
+  renderCSATDist();
+  renderCSATAgente(range);
+  renderCSATTrend(range);
+  renderLabels(range);
+  renderLabelsTable(range);
+  renderHeatmap(range);
+  renderHora(range);
+  renderFindings();
+}
+
+// ─── KPI HEROES ───────────────────────────────────────────────────
+function renderKPIs(range) {
+  const rows = D.por_dia_agente.filter(r=>inRange(r.d, range));
+  const total = rows.reduce((s,r)=>s+r.t, 0);
+  const resol = rows.reduce((s,r)=>s+r.res, 0);
+  const txRes = total ? (resol/total*100).toFixed(1) : 0;
+
+  const csatRows = D.csat_por_dia.filter(r=>inRange(r.d, range));
+  const csatTotal = csatRows.reduce((s,r)=>s+r.t, 0);
+  const csatMedia = csatTotal ? (csatRows.reduce((s,r)=>s+r.m*r.t,0)/csatTotal).toFixed(2) : '—';
+
+  const tmrEvts = D.eventos_por_dia.filter(r=>inRange(r.d,range)&&r.ev==='conversation_resolved');
+  const tmrTot  = tmrEvts.reduce((s,r)=>s+r.t,0);
+  const tmrSum  = tmrEvts.reduce((s,r)=>s+r.s*r.t,0);
+  const tmrH    = tmrTot ? (tmrSum/tmrTot/3600).toFixed(1) : '—';
+
+  const nAtrib = rows.filter(r=>r.ag==='Nao atribuido').reduce((s,r)=>s+r.t,0);
+  const pctNA  = total ? (nAtrib/total*100).toFixed(1) : 0;
+
+  const open   = D.status_total.open    || 0;
+  const snooze = D.status_total.snoozed || 0;
+
+  document.getElementById('kpi-row').innerHTML = `
+    <div class="kc bl">
+      <div class="kl">Volume total</div>
+      <div class="kv">${total.toLocaleString('pt-BR')}</div>
+      <div class="ks">conversas no período</div>
+    </div>
+    <div class="kc gr">
+      <div class="kl">Taxa de resolução</div>
+      <div class="kv">${txRes}%</div>
+      <div class="ks">${resol.toLocaleString('pt-BR')} resolvidas</div>
+      <span class="kb ${+txRes>=95?'ok':'warn'}">${+txRes>=95?'OK':'Atenção'}</span>
+    </div>
+    <div class="kc ye">
+      <div class="kl">CSAT médio</div>
+      <div class="kv">${csatMedia}</div>
+      <div class="ks">${csatTotal} avaliações (/5)</div>
+      <span class="kb ${+csatMedia>=4.8?'ok':+csatMedia>=4.5?'warn':'crit'}">${+csatMedia>=4.8?'Excelente':+csatMedia>=4.5?'Bom':'Atenção'}</span>
+    </div>
+    <div class="kc ${+tmrH>SLA_TMR_H?'re':'pu'}">
+      <div class="kl">TMR médio</div>
+      <div class="kv">${tmrH}h</div>
+      <div class="ks">meta: ≤${SLA_TMR_H}h</div>
+      <span class="kb ${+tmrH<=SLA_TMR_H?'ok':+tmrH<=36?'warn':'crit'}">${+tmrH<=SLA_TMR_H?'OK':+tmrH<=36?'Atenção':'Crítico'}</span>
+    </div>
+    <div class="kc ${pctNA>5?'re':'gr'}">
+      <div class="kl">Sem agente</div>
+      <div class="kv">${pctNA}%</div>
+      <div class="ks">${nAtrib} conversas | backlog: ${open+snooze}</div>
+      <span class="kb ${+pctNA<=5?'ok':'warn'}">${+pctNA<=5?'OK':'Atenção'}</span>
+    </div>
+  `;
+}
+
+// ─── VOLUME MENSAL ────────────────────────────────────────────────
+function renderVolMensal(range) {
+  const data = aggrByMonth(D.por_dia_agente, range);
+  const labels = data.map(([k])=>monthLabel(k));
+  const vals   = data.map(([,v])=>v.t);
+  const res    = data.map(([,v])=>v.res);
+  document.getElementById('vol-total-label').textContent = `${vals.reduce((a,b)=>a+b,0).toLocaleString('pt-BR')} conversas`;
+  mk('chart-vol-mensal','bar',{
+    labels,
+    datasets:[
+      { label:'Conversas abertas', data:vals, backgroundColor:'rgba(91,155,255,.7)', borderColor:'#5b9bff', borderWidth:1, borderRadius:4 },
+      { label:'Resolvidas',        data:res,  backgroundColor:'rgba(31,214,145,.5)', borderColor:'#1fd691', borderWidth:1, borderRadius:4 }
+    ]
+  });
+}
+
+// ─── DOW ──────────────────────────────────────────────────────────
+function renderDOW(range) {
+  const data = aggrDOW(D.hora_dow_por_dia, range);
+  mk('chart-dow','bar',{
+    labels: DOW_NAMES,
+    datasets:[{ label:'Volume', data, backgroundColor:DOW_NAMES.map((_,i)=>[0,6].includes(i)?'rgba(160,126,248,.4)':'rgba(91,155,255,.65)'), borderColor:DOW_NAMES.map((_,i)=>[0,6].includes(i)?'#a07ef8':'#5b9bff'), borderWidth:1, borderRadius:4 }]
+  },{plugins:{legend:{display:false}}});
+}
+
+// ─── TMR POR AGENTE ───────────────────────────────────────────────
+function renderTMR(range) {
+  const data = aggrTMR(D.eventos_por_dia, range);
+  document.getElementById('tmr-meta-label').textContent = `meta: ${SLA_TMR_H}h`;
+  if(!data.length){ document.getElementById('chart-tmr').parentElement.innerHTML+='<p style="color:var(--text2);font-size:11px;text-align:center;padding:20px">Sem dados suficientes no período</p>'; return; }
+  mk('chart-tmr','bar',{
+    labels: data.map(d=>d.ag.split(' ')[0]),
+    datasets:[{ label:'TMR médio (h)', data:data.map(d=>+d.h.toFixed(1)),
+      backgroundColor:data.map(d=>d.h>SLA_TMR_H?'rgba(240,96,96,.7)':d.h>SLA_TMR_H*0.75?'rgba(245,178,39,.7)':'rgba(31,214,145,.7)'),
+      borderColor:data.map(d=>d.h>SLA_TMR_H?'#f06060':d.h>SLA_TMR_H*0.75?'#f5b227':'#1fd691'),
+      borderWidth:1, borderRadius:4 }]
+  },{
+    indexAxis:'y',
+    plugins:{
+      legend:{display:false},
+      annotation:{annotations:{line1:{type:'line',xMin:SLA_TMR_H,xMax:SLA_TMR_H,borderColor:'rgba(240,96,96,.6)',borderWidth:2,borderDash:[4,4]}}}
+    }
+  });
+}
+
+// ─── VOLUME POR AGENTE ────────────────────────────────────────────
+function renderVolAgente(range) {
+  const data = aggrByAgent(D.por_dia_agente, range);
+  document.getElementById('ag-periodo-label').textContent = fmtRange(range);
+  mk('chart-vol-agente','bar',{
+    labels: data.map(([ag])=>ag.split(' ')[0]),
+    datasets:[
+      { label:'Total', data:data.map(([,v])=>v.t), backgroundColor:'rgba(91,155,255,.65)', borderColor:'#5b9bff', borderWidth:1, borderRadius:4 },
+      { label:'Resolvidas', data:data.map(([,v])=>v.res), backgroundColor:'rgba(31,214,145,.5)', borderColor:'#1fd691', borderWidth:1, borderRadius:4 }
+    ]
+  });
+}
+
+// ─── RESOLUÇÃO TABLE ──────────────────────────────────────────────
+function renderResolucao(range) {
+  const data = aggrByAgent(D.por_dia_agente, range);
+  const total = data.reduce((s,[,v])=>s+v.t,0);
+  const rows = data.map(([ag,v])=>{
+    const tx = v.t ? (v.res/v.t*100).toFixed(1) : 0;
+    const share = total ? (v.t/total*100).toFixed(1) : 0;
+    const badge = +tx>=99?'bg':+tx>=95?'by':'br';
+    return `<tr>
+      <td><strong>${ag.split(' ')[0]}</strong><br><span style="font-size:10px;color:var(--text2)">${ag.split(' ').slice(1).join(' ')}</span></td>
+      <td style="text-align:right">${v.t.toLocaleString('pt-BR')}</td>
+      <td>
+        <span class="${badge}">${tx}%</span>
+        <div class="pb"><div class="pf" style="width:${share}%;background:var(--${badge==='bg'?'green':badge==='by'?'yellow':'red'})"></div></div>
+        <span style="font-size:9px;color:var(--text2)">${share}% do vol.</span>
+      </td>
+    </tr>`;
+  }).join('');
+  document.getElementById('resolucao-table').innerHTML =
+    `<table class="dt"><thead><tr><th>Agente</th><th>Volume</th><th>Resolução / Share</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+// ─── CSAT DIST ────────────────────────────────────────────────────
+function renderCSATDist() {
+  const dist = D.csat_dist || [];
+  const total = dist.reduce((s,r)=>s+r.t,0);
+  const STARS = ['⭐','⭐⭐','⭐⭐⭐','⭐⭐⭐⭐','⭐⭐⭐⭐⭐'];
+  mk('chart-csat-dist','doughnut',{
+    labels: dist.map(r=>`${r.r} estrela${r.r>1?'s':''} (${((r.t/total)*100).toFixed(1)}%)`),
+    datasets:[{ data:dist.map(r=>r.t),
+      backgroundColor:['rgba(240,96,96,.8)','rgba(240,132,80,.8)','rgba(245,178,39,.8)','rgba(91,155,255,.8)','rgba(31,214,145,.8)'],
+      borderColor:'#111520', borderWidth:2 }]
+  },{
+    plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:10}}},
+    scales:{x:{display:false},y:{display:false}}
+  });
+}
+
+// ─── CSAT POR AGENTE ──────────────────────────────────────────────
+function renderCSATAgente(range) {
+  const data = aggrCSATByAgent(D.csat_por_dia, range);
+  mk('chart-csat-agente','bar',{
+    labels: data.map(d=>d.ag.split(' ')[0]),
+    datasets:[{ label:'CSAT médio', data:data.map(d=>+d.m.toFixed(2)),
+      backgroundColor:'rgba(31,214,145,.65)', borderColor:'#1fd691', borderWidth:1, borderRadius:4 }]
+  },{
+    plugins:{legend:{display:false}},
+    scales:{y:{min:4,max:5,ticks:{stepSize:.1}}}
+  });
+}
+
+// ─── CSAT TREND ───────────────────────────────────────────────────
+function renderCSATTrend(range) {
+  const data = aggrCSATByMonth(D.csat_por_dia, range);
+  mk('chart-csat-trend','line',{
+    labels: data.map(d=>monthLabel(d.k)),
+    datasets:[{ label:'CSAT médio', data:data.map(d=>+d.m.toFixed(2)),
+      borderColor:'#1fd691', backgroundColor:'rgba(31,214,145,.1)', tension:.4,
+      pointBackgroundColor:'#1fd691', pointRadius:4, fill:true }]
+  },{scales:{y:{min:4,max:5,ticks:{stepSize:.1}}}});
+}
+
+// ─── LABELS ───────────────────────────────────────────────────────
+function renderLabels(range) {
+  const data = aggrLabels(D.labels_por_dia, range).slice(0,12);
+  const total = data.reduce((s,[,t])=>s+t,0);
+  mk('chart-labels','bar',{
+    labels: data.map(([l])=>l),
+    datasets:[{ label:'Conversas', data:data.map(([,t])=>t),
+      backgroundColor:data.map((_,i)=>i<2?'rgba(240,96,96,.7)':i<5?'rgba(245,178,39,.65)':'rgba(91,155,255,.6)'),
+      borderColor:data.map((_,i)=>i<2?'#f06060':i<5?'#f5b227':'#5b9bff'),
+      borderWidth:1, borderRadius:4 }]
+  },{indexAxis:'y',plugins:{legend:{display:false}}});
+}
+
+function renderLabelsTable(range) {
+  const data = aggrLabels(D.labels_por_dia, range).slice(0,8);
+  const total = data.reduce((s,[,t])=>s+t,0);
+  const rows = data.map(([l,t],i)=>{
+    const pct = (t/total*100).toFixed(1);
+    const cls = i<2?'br':i<5?'by':'bg';
+    return `<tr>
+      <td>${i+1}</td>
+      <td><strong>${l}</strong></td>
+      <td style="text-align:right">${t.toLocaleString('pt-BR')}</td>
+      <td><span class="${cls}">${pct}%</span></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('labels-table').innerHTML =
+    `<table class="dt"><thead><tr><th>#</th><th>Label</th><th>Volume</th><th>Share</th></tr></thead><tbody>${rows}</tbody></table>
+     <div style="margin-top:12px;font-size:10px;color:var(--text2)">🔴 Top 2: candidatos à automação &nbsp;🟡 3-5: alta frequência &nbsp;🟢 demais</div>`;
+}
+
+// ─── HEATMAP ──────────────────────────────────────────────────────
+function renderHeatmap(range) {
+  const data = aggrHeatmap(D.hora_dow_por_dia, range);
+  const maxVal = Math.max(...Object.values(data), 1);
+
+  function heatColor(v, max) {
+    const t = Math.pow(v/max, 0.6);
+    if(t < 0.2) return `rgba(31,37,64,${0.3+t})`;
+    if(t < 0.5) return `rgba(91,155,255,${0.3+t*0.8})`;
+    if(t < 0.8) return `rgba(245,178,39,${0.5+t*0.5})`;
+    return `rgba(240,96,96,${0.6+t*0.4})`;
+  }
+
+  const hours = Array.from({length:24},(_,i)=>i);
+  const workHours = [7,8,9,10,11,12,13,14,15,16,17,18,19,20];
+
+  let html = `<table class="hm"><thead><tr><th></th>`;
+  workHours.forEach(h=>{ html+=`<th>${String(h).padStart(2,'0')}h</th>`; });
+  html+=`</tr></thead><tbody>`;
+
+  DOW_NAMES.slice(1,6).forEach((dow,di)=>{
+    const dowIdx = di+1;
+    html+=`<tr><td class="row-label">${dow}</td>`;
+    workHours.forEach(h=>{
+      const v = data[`${h}|${dowIdx}`]||0;
+      const bg = heatColor(v, maxVal);
+      const color = v/maxVal>0.5?'#fff':'rgba(255,255,255,.6)';
+      html+=`<td style="background:${bg};color:${color}" title="${dow} ${h}h: ${v} conversas">${v||''}</td>`;
+    });
+    html+=`</tr>`;
+  });
+  html+=`</tbody></table>`;
+
+  document.getElementById('heatmap-wrap').innerHTML = html;
+
+  // legend
+  const steps = 5;
+  let legendHtml = '';
+  for(let i=0;i<=steps;i++){
+    legendHtml+=`<div class="hm-swatch" style="background:${heatColor(i/steps*maxVal,maxVal)}"></div>`;
+  }
+  document.getElementById('hm-legend-bar').innerHTML = legendHtml;
+}
+
+// ─── HORA DO DIA ──────────────────────────────────────────────────
+function renderHora(range) {
+  const data = aggrHora(D.hora_dow_por_dia, range);
+  const labels = Array.from({length:24},(_,i)=>`${String(i).padStart(2,'0')}h`);
+  mk('chart-hora','bar',{
+    labels,
+    datasets:[{ label:'Conversas', data,
+      backgroundColor: data.map(v=>{
+        const t=v/Math.max(...data);
+        return t>0.7?'rgba(240,96,96,.75)':t>0.4?'rgba(245,178,39,.65)':'rgba(91,155,255,.55)';
+      }),
+      borderColor: data.map(v=>{
+        const t=v/Math.max(...data);
+        return t>0.7?'#f06060':t>0.4?'#f5b227':'#5b9bff';
+      }),
+      borderWidth:1, borderRadius:3 }]
+  },{plugins:{legend:{display:false}}});
+}
+
+// ─── FINDINGS ────────────────────────────────────────────────────
+function renderFindings() {
+  const findings = [
+    { sev:'crit', tag:'⚠️ Crítico', title:'Inatividade + Backup-da-Base = 46% do volume',
+      text:'Os dois maiores tópicos são recorrentes e padronizáveis. Automatizar resposta nesses casos pode liberar ~640 tickets/mês.',
+      rec:'Criar KB + resposta automática no Chatwoot. Owner: TL Suporte + Dev. Impacto: -40% no volume dessas categorias.' },
+    { sev:'crit', tag:'⚠️ Crítico', title:'TMR acima da meta em 2 dos 4 agentes',
+      text:'Vinícius (44,1h) e Henrique (35,0h bruto / 25,9h p95) estão acima da meta de 24h. Outliers de tickets sem atividade distorcem a média.',
+      rec:'Ativar snoozed automático em 48h sem resposta + escalação automática para N2/N3 após 24h. Owner: Admin Chatwoot.' },
+    { sev:'warn', tag:'🟡 Atenção', title:'Taxa de pesquisa CSAT de apenas 7,7%',
+      text:'414 de 5.370 conversas receberam avaliação. A amostra pode ter viés de seleção — clientes neutros raramente respondem espontaneamente.',
+      rec:'Envio proativo de CSAT pós-resolução. Meta: ≥15% de resposta. Owner: TL Suporte.' },
+    { sev:'warn', tag:'🟡 Atenção', title:'6,6% do volume entra sem agente designado',
+      text:'355 conversas sem atribuição têm taxa de resolução de 80,8% vs. 99%+ dos agentes designados. Proporção melhorou (12,2% → 5,2%) mas ainda acima da meta de 5%.',
+      rec:'Ativar auto-atribuição round-robin no Chatwoot para tickets entrantes. Owner: Admin Chatwoot.' },
+    { sev:'ok', tag:'✅ Destaque', title:'Micaelly é o benchmark operacional',
+      text:'1.845 conversas (34% do volume), TMR de 18,2h (dentro da meta), resolução de 99,6%, CSAT 4,81/5. Maior volume + melhor equilíbrio da equipe.',
+      rec:'Documentar workflow de Micaelly como playbook N1. Shadowing com Henrique e Vinícius. Owner: TL Suporte.' },
+    { sev:'info', tag:'ℹ️ Planejamento', title:'Pico 11h–13h: 43% do volume em 3 horas',
+      text:'Horas 11h (749), 12h (830) e 13h (761) concentram 2.340 conversas. Risco de gargalo se a cobertura da equipe for reduzida nesse horário.',
+      rec:'Escalonar horários de almoço para garantir cobertura 11h–14h. Priorizar atribuição Ter–Qua. Owner: TL Suporte.' },
+  ];
+
+  document.getElementById('findings-grid').innerHTML = findings.map(f=>`
+    <div class="finding ${f.sev}">
+      <div class="f-tag">${f.tag}</div>
+      <h4>${f.title}</h4>
+      <p>${f.text}</p>
+      <div class="f-rec"><strong>→ Recomendação:</strong> ${f.rec}</div>
+    </div>
+  `).join('');
+}
+
+// ─── AUTO-RELOAD ──────────────────────────────────────────────────
+// Recarrega a página se o data.js for atualizado (muda o extraido_em)
+let _lastUpdated = D && D.extraido_em ? D.extraido_em : null;
+setInterval(()=>{
+  fetch('data.js?t='+Date.now(),{cache:'no-store'})
+    .then(r=>r.text())
+    .then(txt=>{
+      const m = txt.match(/"extraido_em":"([^"]+)"/);
+      if(m && m[1] !== _lastUpdated) { _lastUpdated=m[1]; location.reload(); }
+    }).catch(()=>{});
+}, 60000); // checa a cada 60s
+
+// ─── INIT ─────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
