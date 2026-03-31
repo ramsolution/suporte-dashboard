@@ -460,15 +460,18 @@
 
 <script>
 // ═══════ CONSTANTES SLA / THRESHOLDS ═══════
-const SLA_TMR_H      = 24;   // meta tempo de resolução (horas)
-const SLA_TMR_WARN_H = 18;   // atenção TMR (horas)
-const SLA_TMR_CRIT_H = 36;   // crítico TMR (horas)
-const SLA_TFR_MIN    = 30;   // meta primeira resposta (minutos)
-const SLA_TFR_WARN_M = 15;   // atenção TFR (minutos)
-const CSAT_EXCELLENT = 4.8;  // CSAT excelente
-const CSAT_GOOD      = 4.5;  // CSAT bom
-const RES_RATE_OK    = 95;   // taxa de resolução OK (%)
-const SURVEY_RATE_OK = 15;   // taxa de resposta pesquisa OK (%)
+// Lidas do sla_config exportado pelo extract_data.py (fonte única de verdade).
+// Fallback para os valores padrão caso data.js ainda não tenha sla_config.
+const _SLA = (typeof SUPORTE_DATA !== 'undefined' && SUPORTE_DATA.sla_config) || {};
+const SLA_TMR_H      = _SLA.tmr_h        ?? 24;
+const SLA_TMR_WARN_H = _SLA.tmr_warn_h   ?? 18;
+const SLA_TMR_CRIT_H = _SLA.tmr_crit_h   ?? 36;
+const SLA_TFR_MIN    = _SLA.tfr_min      ?? 30;
+const SLA_TFR_WARN_M = _SLA.tfr_warn_min ?? 15;
+const CSAT_EXCELLENT = _SLA.csat_excellent ?? 4.8;
+const CSAT_GOOD      = _SLA.csat_good     ?? 4.5;
+const RES_RATE_OK    = _SLA.res_rate_ok   ?? 95;
+const SURVEY_RATE_OK = _SLA.survey_rate_ok ?? 15;
 
 // ═══════ ESTADO ═══════
 let S=null, E=null;
