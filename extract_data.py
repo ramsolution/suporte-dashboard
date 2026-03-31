@@ -7,7 +7,9 @@ Gera data.js com dados diários para filtros client-side no dashboard
 import psycopg2
 import json
 import os
-from datetime import datetime, date
+from datetime import datetime, date, timezone, timedelta
+
+BRT = timezone(timedelta(hours=-3))  # America/Sao_Paulo (sem DST)
 
 DB_CONFIG = {
     "host":     os.getenv("DB_HOST", "34.151.226.30"),
@@ -56,6 +58,7 @@ def extract_all():
                SUM(CASE WHEN c.status=1 THEN 1 ELSE 0 END) as resolvidas
         FROM conversations c
         LEFT JOIN users u ON c.assignee_id=u.id
+        WHERE c.assignee_id IS NULL OR c.assignee_id != 1
         GROUP BY dia, agente ORDER BY dia
     """, "dados_diarios_agente")
     data["por_dia_agente"] = [
@@ -95,6 +98,7 @@ def extract_all():
         FROM reporting_events re
         LEFT JOIN users u ON re.user_id=u.id
         WHERE re.name = 'conversation_resolved'
+          AND (re.user_id IS NULL OR re.user_id != 1)
         GROUP BY dia, agente, re.name ORDER BY dia
     """, "tmr_diario")
 
@@ -116,7 +120,7 @@ def extract_all():
         JOIN LATERAL (
             SELECT m.created_at, m.sender_id
             FROM messages m
-            INNER JOIN users u2 ON u2.id = m.sender_id
+            INNER JOIN users u2 ON u2.id = m.sender_id AND u2.id != 1
             WHERE m.conversation_id = c.id
               AND m.message_type = 1
             ORDER BY m.created_at ASC
@@ -223,7 +227,7 @@ def extract_all():
     }
 
     # ── Metadata ─────────────────────────────────────────────────────────────
-    data["extraido_em"] = datetime.now().isoformat()
+    data["extraido_em"] = datetime.now(BRT).isoformat()
     data["total_mensagens"] = sum(data["msg_tipos"].values())
 
     conn.close()
