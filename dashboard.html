@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard de Suporte — Sistema RAM</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --card: #1a1d2e;
+      --card2: #222540;
+      --border: #2d3158;
+      --text: #e2e8f0;
+      --text2: #94a3b8;
+      --blue: #4f8ef7;
+      --green: #22d3a0;
+      --yellow: #fbbf24;
+      --red: #f87171;
+      --purple: #a78bfa;
+      --orange: #fb923c;
+      --teal: #2dd4bf;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; }
+
+    /* HEADER */
+    header {
+      background: linear-gradient(135deg, #1e2a4a 0%, #1a1d2e 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .logo { width: 44px; height: 44px; background: var(--blue); border-radius: 10px;
+            display: flex; align-items: center; justify-content: center; font-size: 22px; }
+    .header-title h1 { font-size: 20px; font-weight: 700; }
+    .header-title p { font-size: 12px; color: var(--text2); margin-top: 2px; }
+    .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+    .update-badge { background: #1e3a2f; border: 1px solid var(--green); color: var(--green);
+                    padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .period-badge { font-size: 11px; color: var(--text2); }
+
+    /* NAV TABS */
+    nav {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      display: flex; gap: 0;
+    }
+    .tab { padding: 14px 20px; cursor: pointer; font-size: 13px; color: var(--text2);
+           border-bottom: 2px solid transparent; transition: all 0.2s; user-select: none; }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--blue); border-bottom-color: var(--blue); font-weight: 600; }
+
+    /* PAGES */
+    .page { display: none; padding: 28px 32px; }
+    .page.active { display: block; }
+
+    /* KPI CARDS */
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
+    .kpi-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px;
+      position: relative; overflow: hidden;
+    }
+    .kpi-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    }
+    .kpi-card.blue::before { background: var(--blue); }
+    .kpi-card.green::before { background: var(--green); }
+    .kpi-card.yellow::before { background: var(--yellow); }
+    .kpi-card.red::before { background: var(--red); }
+    .kpi-card.purple::before { background: var(--purple); }
+    .kpi-card.orange::before { background: var(--orange); }
+    .kpi-card.teal::before { background: var(--teal); }
+    .kpi-label { font-size: 11px; color: var(--text2); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .kpi-value { font-size: 32px; font-weight: 700; margin: 8px 0 4px; line-height: 1; }
+    .kpi-sub { font-size: 11px; color: var(--text2); }
+    .kpi-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; margin-top: 4px; }
+    .kpi-badge.up { background: #1e3a2f; color: var(--green); }
+    .kpi-badge.down { background: #3a1e1e; color: var(--red); }
+    .kpi-badge.neutral { background: #2a2a1e; color: var(--yellow); }
+
+    /* CHARTS GRID */
+    .charts-grid { display: grid; gap: 20px; }
+    .grid-2 { grid-template-columns: 1fr 1fr; }
+    .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .grid-1-2 { grid-template-columns: 1fr 2fr; }
+    .grid-2-1 { grid-template-columns: 2fr 1fr; }
+
+    .chart-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px;
+    }
+    .chart-card.wide { grid-column: 1 / -1; }
+    .chart-title { font-size: 13px; font-weight: 600; margin-bottom: 16px; color: var(--text); }
+    .chart-title span { color: var(--text2); font-weight: 400; font-size: 11px; margin-left: 8px; }
+    .chart-wrap { position: relative; }
+
+    /* TABLE */
+    .data-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    .data-table th { font-size: 11px; color: var(--text2); text-transform: uppercase;
+                     letter-spacing: 0.04em; padding: 8px 12px; border-bottom: 1px solid var(--border);
+                     text-align: left; }
+    .data-table td { padding: 10px 12px; border-bottom: 1px solid rgba(45,49,88,0.4); font-size: 13px; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: rgba(79,142,247,0.04); }
+
+    .badge-green { background: #1e3a2f; color: var(--green); padding: 2px 10px; border-radius: 10px; font-size: 11px; }
+    .badge-yellow { background: #3a2f1e; color: var(--yellow); padding: 2px 10px; border-radius: 10px; font-size: 11px; }
+    .badge-red { background: #3a1e1e; color: var(--red); padding: 2px 10px; border-radius: 10px; font-size: 11px; }
+
+    /* PROGRESS BAR */
+    .progress-bar { background: var(--border); border-radius: 4px; height: 6px; margin-top: 4px; }
+    .progress-fill { height: 6px; border-radius: 4px; }
+
+    /* SECTION TITLE */
+    .section-title { font-size: 16px; font-weight: 700; margin-bottom: 20px; color: var(--text); }
+    .section-title span { color: var(--text2); font-size: 12px; font-weight: 400; margin-left: 8px; }
+
+    /* STARS */
+    .stars { color: var(--yellow); letter-spacing: 2px; }
+
+    /* ALERT BOX */
+    .alert { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.3);
+             border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px; }
+    .alert strong { color: var(--red); }
+
+    .info-box { background: rgba(79,142,247,0.08); border: 1px solid rgba(79,142,247,0.3);
+                border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px; }
+    .info-box strong { color: var(--blue); }
+
+    @media (max-width: 900px) {
+      .grid-2, .grid-3, .grid-1-2, .grid-2-1 { grid-template-columns: 1fr; }
+      .page { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="logo">📊</div>
+    <div class="header-title">
+      <h1>Dashboard de Suporte — Sistema RAM</h1>
+      <p>Plataforma: Chatwoot · chat.ramnuvem.com · Período: Out/2025 – Mar/2026</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="update-badge">● AO VIVO</div>
+    <div class="period-badge">Atualizado em: 31/03/2026</div>
+  </div>
+</header>
+
+<nav>
+  <div class="tab active" onclick="showPage('visao-geral',this)">Visão Geral</div>
+  <div class="tab" onclick="showPage('agentes',this)">Agentes</div>
+  <div class="tab" onclick="showPage('csat',this)">CSAT</div>
+  <div class="tab" onclick="showPage('categorias',this)">Categorias</div>
+  <div class="tab" onclick="showPage('padroes',this)">Padrões de Demanda</div>
+  <div class="tab" onclick="showPage('sla',this)">SLA & Tempos</div>
+</nav>
+
+<!-- ═══════════════ PÁGINA: VISÃO GERAL ═══════════════ -->
+<div class="page active" id="page-visao-geral">
+  <div class="section-title">Visão Geral <span>Resumo do período Out/2025 – Mar/2026</span></div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card blue">
+      <div class="kpi-label">Total de Conversas</div>
+      <div class="kpi-value">5.370</div>
+      <div class="kpi-sub">No período analisado</div>
+      <span class="kpi-badge up">+21% vs Out-Nov</span>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Resolvidas</div>
+      <div class="kpi-value">5.187</div>
+      <div class="kpi-sub">96,6% de resolução</div>
+      <span class="kpi-badge up">Excelente</span>
+    </div>
+    <div class="kpi-card yellow">
+      <div class="kpi-label">Em Aberto</div>
+      <div class="kpi-value">5</div>
+      <div class="kpi-sub">Abertas agora</div>
+      <span class="kpi-badge neutral">Normal</span>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-label">Adiadas</div>
+      <div class="kpi-value">178</div>
+      <div class="kpi-sub">Snoozed/pendentes</div>
+      <span class="kpi-badge down">Atenção</span>
+    </div>
+    <div class="kpi-card purple">
+      <div class="kpi-label">Mensagens</div>
+      <div class="kpi-value">140k</div>
+      <div class="kpi-sub">140.095 mensagens</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">CSAT Médio</div>
+      <div class="kpi-value">4,83</div>
+      <div class="kpi-sub">de 5,0 · 414 avaliações</div>
+      <span class="kpi-badge up">96,6% positivo</span>
+    </div>
+    <div class="kpi-card teal">
+      <div class="kpi-label">Contatos Únicos</div>
+      <div class="kpi-value">614</div>
+      <div class="kpi-sub">Clientes atendidos</div>
+    </div>
+    <div class="kpi-card blue">
+      <div class="kpi-label">Agentes Ativos</div>
+      <div class="kpi-value">5</div>
+      <div class="kpi-sub">de suporte direto</div>
+    </div>
+  </div>
+
+  <!-- Charts Row 1 -->
+  <div class="charts-grid grid-2-1" style="margin-bottom:20px">
+    <div class="chart-card">
+      <div class="chart-title">Conversas por Mês <span>Volume mensal de atendimentos</span></div>
+      <div class="chart-wrap"><canvas id="chart-conversas-mes" height="220"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Status das Conversas <span>Distribuição atual</span></div>
+      <div class="chart-wrap"><canvas id="chart-status" height="220"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Charts Row 2 -->
+  <div class="charts-grid grid-2" style="margin-bottom:20px">
+    <div class="chart-card">
+      <div class="chart-title">Volume por Agente <span>Total de conversas atribuídas</span></div>
+      <div class="chart-wrap"><canvas id="chart-agente-volume" height="240"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Tipo de Mensagens <span>Distribuição por tipo</span></div>
+      <div class="chart-wrap"><canvas id="chart-msg-tipo" height="240"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Equipes -->
+  <div class="chart-card" style="margin-bottom:20px">
+    <div class="chart-title">Conversas por Equipe</div>
+    <table class="data-table">
+      <thead><tr><th>Equipe</th><th>Conversas</th><th>% do Total</th><th>Participação</th></tr></thead>
+      <tbody>
+        <tr><td>Suporte Nível 1</td><td><strong>4.834</strong></td><td>90,1%</td>
+          <td><div class="progress-bar"><div class="progress-fill" style="width:90.1%;background:var(--blue)"></div></div></td></tr>
+        <tr><td>Sem equipe</td><td><strong>519</strong></td><td>9,7%</td>
+          <td><div class="progress-bar"><div class="progress-fill" style="width:9.7%;background:var(--text2)"></div></div></td></tr>
+        <tr><td>Suporte RAMPro Nível 1</td><td><strong>16</strong></td><td>0,3%</td>
+          <td><div class="progress-bar"><div class="progress-fill" style="width:0.3%;background:var(--purple)"></div></div></td></tr>
+        <tr><td>Suporte Nível 2</td><td><strong>1</strong></td><td>&lt;0,1%</td>
+          <td><div class="progress-bar"><div class="progress-fill" style="width:0.1%;background:var(--yellow)"></div></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════ PÁGINA: AGENTES ═══════════════ -->
+<div class="page" id="page-agentes">
+  <div class="section-title">Performance por Agente <span>Análise individual de desempenho</span></div>
+
+  <div class="alert">
+    <strong>Atenção:</strong> 354 conversas (6,6%) ficaram sem atribuição de agente — revisar processo de distribuição.
+  </div>
+
+  <!-- Tabela completa de agentes -->
+  <div class="chart-card" style="margin-bottom:20px">
+    <div class="chart-title">Ranking de Agentes — Indicadores Consolidados</div>
+    <table class="data-table">
+      <thead><tr><th>#</th><th>Agente</th><th>Conversas</th><th>% do Total</th><th>TMR (horas)</th><th>TFR (min)</th><th>CSAT</th><th>Status SLA</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>1</td><td><strong>Micaelly Mariano</strong></td><td>1.844</td><td>34,3%</td>
+          <td>18,1h</td><td>&lt;1min</td>
+          <td><span class="stars">★★★★★</span> 4,81</td>
+          <td><span class="badge-yellow">Atenção</span></td>
+        </tr>
+        <tr>
+          <td>2</td><td><strong>Henrique Moreira</strong></td><td>1.252</td><td>23,3%</td>
+          <td>35,0h</td><td>14,3min</td>
+          <td><span class="stars">★★★★★</span> 4,79</td>
+          <td><span class="badge-red">Crítico</span></td>
+        </tr>
+        <tr>
+          <td>3</td><td><strong>Vinícius Escandon</strong></td><td>1.203</td><td>22,4%</td>
+          <td>44,1h</td><td>22,9min</td>
+          <td><span class="stars">★★★★★</span> 4,89</td>
+          <td><span class="badge-red">Crítico</span></td>
+        </tr>
+        <tr>
+          <td>4</td><td><strong>Júlio</strong></td><td>695</td><td>12,9%</td>
+          <td>12,7h</td><td>&lt;1min</td>
+          <td><span class="stars">★★★★★</span> 4,75</td>
+          <td><span class="badge-green">Bom</span></td>
+        </tr>
+        <tr>
+          <td>5</td><td><strong>Carlos Lauriano</strong></td><td>15</td><td>0,3%</td>
+          <td>19,2h</td><td>&lt;1min</td>
+          <td><span class="stars">★★★★★</span> 5,00</td>
+          <td><span class="badge-yellow">Atenção</span></td>
+        </tr>
+        <tr style="color:var(--text2)">
+          <td>—</td><td>Não atribuído</td><td>354</td><td>6,6%</td>
+          <td>—</td><td>—</td><td>—</td>
+          <td><span class="badge-red">Sem atribuição</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="charts-grid grid-2" style="margin-bottom:20px">
+    <div class="chart-card">
+      <div class="chart-title">Volume de Conversas por Agente</div>
+      <div class="chart-wrap"><canvas id="chart-agente-bar" height="280"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Tempo Médio de Resolução por Agente <span>em horas</span></div>
+      <div class="chart-wrap"><canvas id="chart-tmr" height="280"></canvas></div>
+    </div>
+  </div>
+
+  <div class="charts-grid grid-2">
+    <div class="chart-card">
+      <div class="chart-title">Tempo de Primeira Resposta <span>em minutos</span></div>
+      <div class="chart-wrap"><canvas id="chart-tfr" height="240"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">CSAT por Agente <span>nota média 1-5</span></div>
+      <div class="chart-wrap"><canvas id="chart-csat-agente" height="240"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ PÁGINA: CSAT ═══════════════ -->
+<div class="page" id="page-csat">
+  <div class="section-title">Satisfação do Cliente (CSAT) <span>414 avaliações coletadas</span></div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card green">
+      <div class="kpi-label">CSAT Geral</div>
+      <div class="kpi-value">4,83</div>
+      <div class="kpi-sub">Média das avaliações</div>
+      <span class="kpi-badge up">Excelente</span>
+    </div>
+    <div class="kpi-card blue">
+      <div class="kpi-label">Avaliações Positivas</div>
+      <div class="kpi-value">96,6%</div>
+      <div class="kpi-sub">Rating 4 ou 5 estrelas</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">Avaliações Negativas</div>
+      <div class="kpi-value">3,4%</div>
+      <div class="kpi-sub">Rating 1, 2 ou 3 estrelas</div>
+      <span class="kpi-badge down">19 avaliações baixas</span>
+    </div>
+    <div class="kpi-card yellow">
+      <div class="kpi-label">Taxa de Resposta CSAT</div>
+      <div class="kpi-value">7,7%</div>
+      <div class="kpi-sub">414 de 5.370 conversas</div>
+      <span class="kpi-badge neutral">Melhorar coleta</span>
+    </div>
+  </div>
+
+  <div class="charts-grid grid-2" style="margin-bottom:20px">
+    <div class="chart-card">
+      <div class="chart-title">Distribuição de Notas CSAT <span>Quantidade por estrelas</span></div>
+      <div class="chart-wrap"><canvas id="chart-csat-dist" height="260"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Evolução do CSAT Mensal <span>Nota média por mês</span></div>
+      <div class="chart-wrap"><canvas id="chart-csat-mes" height="260"></canvas></div>
+    </div>
+  </div>
+
+  <div class="charts-grid grid-2">
+    <div class="chart-card">
+      <div class="chart-title">CSAT por Agente <span>Nota média individual</span></div>
+      <div class="chart-wrap"><canvas id="chart-csat-agente2" height="260"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Avaliações Negativas (rating ≤ 3) <span>Detalhe por nota</span></div>
+      <div class="chart-wrap"><canvas id="chart-csat-neg" height="260"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ PÁGINA: CATEGORIAS ═══════════════ -->
+<div class="page" id="page-categorias">
+  <div class="section-title">Categorias de Atendimento <span>Análise por labels/tags</span></div>
+
+  <div class="info-box">
+    <strong>Insight:</strong> "Inatividade" e "Backup da base" representam quase 40% de todos os atendimentos —
+    indicando oportunidade de criação de materiais de autoatendimento para esses tópicos.
+  </div>
+
+  <div class="charts-grid grid-2-1" style="margin-bottom:20px">
+    <div class="chart-card">
+      <div class="chart-title">Top 15 Categorias <span>Conversas por label</span></div>
+      <div class="chart-wrap"><canvas id="chart-labels" height="380"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Grupos Temáticos</div>
+      <div class="chart-wrap"><canvas id="chart-grupos" height="380"></canvas></div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-title">Tabela Completa de Categorias</div>
+    <table class="data-table">
+      <thead><tr><th>Categoria</th><th>Conversas</th><th>% do Total Etiquetado</th><th>Distribuição</th></tr></thead>
+      <tbody>
+        <tr><td>inatividade</td><td>1.005</td><td>22,2%</td>
+          <td><div class="progress-bar"><div class="progress-fill" style="width:100%;background:var(--blue)"></div></div></td></tr>
+        <tr><td>backup-da-base</td><td>737</td><td>16,3%</td>
+          <td><div class="progress-bar"><div class="progress-fill" style="width:73.3%;background:var(--green)"></div></div></td></tr>
+        <tr><td>xml</td><td>316</td><td>7,0%</td>
+          <td><div class="progress-bar"><div class="progress-fill" style="width:31.4%;background:var(--purple)"></div></div></td></tr>
+        <tr><td>aguardando-retorno</td><td>210</td><td>4,6%</td>
+          <td><div class="progress-bar"><div class="progress-fill" style="width:20.9%;background:var(--yellow)"></div></div></td></tr>
+        <tr><td>financeiro</td><td>111</td><td>2,5%</td>
+          <td><div class="progress-bar"><div class="progress-fill" style="width:11%;background:var(--orange)"></div></div></td></tr>
+        <tr><td>sem-relação-com-o-sistema</td><td>86</td><td>1,9%</td>
+          <td><div class="progress-bar"><div class="progress-fill" style="width:8.6%;background:var(--teal)"></div></div></td></tr>
+        <tr><td>orçamento-e-pedidos</td><td>84</td><td>1,9%</td>
+          <td><div class="progress-bar"><div class="progress-fill" style="width:8.4%;background:var(--red)"></div></div></td></tr>
+        <tr><td>cliente-resolveu</td><td>72</td><td>1,6%</td>
+          <td><div class="progress-bar"><div class="progress-fill" style="width:7.2%;background:var(--blue)"></div></div></td></tr>
+        <tr><td>nota-fiscal</td><td>61</td><td>1,3%</td>
+          <td><div class="progress-bar"><div class="progress-fill" style="width:6.1%;background:var(--green)"></div></div></td></tr>
+        <tr><td>lead</td><td>60</td><td>1,3%</td>
+          <td><div class="progress-bar"><div class="progress-fill" style="width:6%;background:var(--purple)"></div></div></td></tr>
+        <tr><td>licença</td><td>60</td><td>1,3%</td>
+          <td><div class="progress-bar"><div class="progress-fill" style="width:6%;background:var(--yellow)"></div></div></td></tr>
+        <tr><td>boleto</td><td>59</td><td>1,3%</td>
+          <td><div class="progress-bar"><div class="progress-fill" style="width:5.9%;background:var(--orange)"></div></div></td></tr>
+        <tr><td>relatórios</td><td>56</td><td>1,2%</td>
+          <td><div class="progress-bar"><div class="progress-fill" style="width:5.6%;background:var(--teal)"></div></div></td></tr>
+        <tr><td>ts-nuvem</td><td>54</td><td>1,2%</td>
+          <td><div class="progress-bar"><div class="progress-fill" style="width:5.4%;background:var(--red)"></div></div></td></tr>
+        <tr><td>certificado</td><td>53</td><td>1,2%</td>
+          <td><div class="progress-bar"><div class="progress-fill" style="width:5.3%;background:var(--blue)"></div></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════ PÁGINA: PADRÕES DE DEMANDA ═══════════════ -->
+<div class="page" id="page-padroes">
+  <div class="section-title">Padrões de Demanda <span>Quando o suporte é mais solicitado</span></div>
+
+  <div class="info-box">
+    <strong>Insight:</strong> Pico de demanda entre 11h–14h e 17h–19h. Sexta-feira apresenta queda de volume —
+    considerar escala reforçada às quartas e terças.
+  </div>
+
+  <div class="charts-grid grid-2" style="margin-bottom:20px">
+    <div class="chart-card">
+      <div class="chart-title">Volume por Hora do Dia <span>Distribuição de abertura de conversas</span></div>
+      <div class="chart-wrap"><canvas id="chart-hora" height="280"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Volume por Dia da Semana <span>Seg–Dom</span></div>
+      <div class="chart-wrap"><canvas id="chart-dia-semana" height="280"></canvas></div>
+    </div>
+  </div>
+
+  <div class="chart-card wide" style="margin-bottom:20px">
+    <div class="chart-title">Crescimento Mensal de Conversas <span>Tendência Out/2025 – Mar/2026</span></div>
+    <div class="chart-wrap"><canvas id="chart-crescimento" height="200"></canvas></div>
+  </div>
+
+  <div class="charts-grid grid-2">
+    <div class="chart-card">
+      <div class="chart-title">Mensagens Recebidas vs Enviadas <span>Relação de troca por período</span></div>
+      <div class="chart-wrap"><canvas id="chart-msgs" height="260"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Inboxes por Canal <span>Origem dos atendimentos</span></div>
+      <div class="chart-wrap"><canvas id="chart-inboxes" height="260"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ PÁGINA: SLA & TEMPOS ═══════════════ -->
+<div class="page" id="page-sla">
+  <div class="section-title">SLA & Tempos de Resposta <span>Benchmarks e metas de atendimento</span></div>
+
+  <!-- SLA Cards -->
+  <div class="kpi-grid" style="margin-bottom:24px">
+    <div class="kpi-card green">
+      <div class="kpi-label">TFR Médio Geral</div>
+      <div class="kpi-value">8,3 min</div>
+      <div class="kpi-sub">Primeira resposta</div>
+      <span class="kpi-badge up">Meta: &lt;30min</span>
+    </div>
+    <div class="kpi-card yellow">
+      <div class="kpi-label">TMR Médio Geral</div>
+      <div class="kpi-value">27h</div>
+      <div class="kpi-sub">Tempo para resolver</div>
+      <span class="kpi-badge neutral">Meta: &lt;24h</span>
+    </div>
+    <div class="kpi-card blue">
+      <div class="kpi-label">Tempo Médio de Resposta</div>
+      <div class="kpi-value">62,9 min</div>
+      <div class="kpi-sub">Entre mensagens</div>
+      <span class="kpi-badge neutral">Atenção</span>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-label">Backlog Atual</div>
+      <div class="kpi-value">183</div>
+      <div class="kpi-sub">5 abertas + 178 adiadas</div>
+      <span class="kpi-badge down">Monitorar</span>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Melhor TMR</div>
+      <div class="kpi-value">12,7h</div>
+      <div class="kpi-sub">Júlio — dentro do SLA</div>
+      <span class="kpi-badge up">Referência</span>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">Pior TMR</div>
+      <div class="kpi-value">44,1h</div>
+      <div class="kpi-sub">Vinícius Escandon</div>
+      <span class="kpi-badge down">Acima do SLA</span>
+    </div>
+  </div>
+
+  <!-- SLA Table -->
+  <div class="chart-card" style="margin-bottom:20px">
+    <div class="chart-title">Status de SLA por Agente <span>Benchmarks: TFR &lt;30min | TMR &lt;24h</span></div>
+    <table class="data-table">
+      <thead><tr><th>Agente</th><th>TFR Médio</th><th>Status TFR</th><th>TMR Médio</th><th>Status TMR</th><th>Conversas</th><th>Avaliação Geral</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Júlio</strong></td>
+          <td>&lt;1 min</td><td><span class="badge-green">Ótimo</span></td>
+          <td>12,7 h</td><td><span class="badge-green">Dentro</span></td>
+          <td>695</td><td><span class="badge-green">Bom</span></td>
+        </tr>
+        <tr>
+          <td><strong>Micaelly Mariano</strong></td>
+          <td>&lt;1 min</td><td><span class="badge-green">Ótimo</span></td>
+          <td>18,1 h</td><td><span class="badge-yellow">Atenção</span></td>
+          <td>1.844</td><td><span class="badge-yellow">Regular</span></td>
+        </tr>
+        <tr>
+          <td><strong>Carlos Lauriano</strong></td>
+          <td>&lt;1 min</td><td><span class="badge-green">Ótimo</span></td>
+          <td>19,2 h</td><td><span class="badge-yellow">Atenção</span></td>
+          <td>15</td><td><span class="badge-yellow">Regular</span></td>
+        </tr>
+        <tr>
+          <td><strong>Henrique Moreira</strong></td>
+          <td>14,3 min</td><td><span class="badge-yellow">Atenção</span></td>
+          <td>35,0 h</td><td><span class="badge-red">Violação</span></td>
+          <td>1.252</td><td><span class="badge-red">Crítico</span></td>
+        </tr>
+        <tr>
+          <td><strong>Vinícius Escandon</strong></td>
+          <td>22,9 min</td><td><span class="badge-yellow">Atenção</span></td>
+          <td>44,1 h</td><td><span class="badge-red">Violação</span></td>
+          <td>1.203</td><td><span class="badge-red">Crítico</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="charts-grid grid-2">
+    <div class="chart-card">
+      <div class="chart-title">TMR por Agente vs Meta <span>Meta: 24 horas</span></div>
+      <div class="chart-wrap"><canvas id="chart-sla-tmr" height="280"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">TFR por Agente vs Meta <span>Meta: 30 minutos</span></div>
+      <div class="chart-wrap"><canvas id="chart-sla-tfr" height="280"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════ NAVEGAÇÃO ══════════════════
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  el.classList.add('active');
+}
+
+// ══════════════════ DADOS ══════════════════
+const COLORS = {
+  blue:   'rgba(79,142,247,',
+  green:  'rgba(34,211,160,',
+  yellow: 'rgba(251,191,36,',
+  red:    'rgba(248,113,113,',
+  purple: 'rgba(167,139,250,',
+  orange: 'rgba(251,146,60,',
+  teal:   'rgba(45,212,191,',
+  gray:   'rgba(148,163,184,'
+};
+
+const agentes = ['Micaelly Mariano', 'Henrique Moreira', 'Vinícius Escandon', 'Júlio', 'Carlos Lauriano'];
+
+const defaults = {
+  color: '#e2e8f0',
+  plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } },
+  scales: {
+    x: { ticks: { color: '#94a3b8', font: { size: 11 } }, grid: { color: 'rgba(45,49,88,0.4)' } },
+    y: { ticks: { color: '#94a3b8', font: { size: 11 } }, grid: { color: 'rgba(45,49,88,0.4)' } }
+  }
+};
+
+function barColors(arr, alpha) {
+  const palette = [COLORS.blue, COLORS.green, COLORS.purple, COLORS.yellow, COLORS.orange, COLORS.teal, COLORS.red];
+  return arr.map((_, i) => palette[i % palette.length] + alpha + ')');
+}
+
+// ══════════════════ GRÁFICOS VISÃO GERAL ══════════════════
+
+// Conversas por mês
+new Chart(document.getElementById('chart-conversas-mes'), {
+  type: 'bar',
+  data: {
+    labels: ['Out/25', 'Nov/25', 'Dez/25', 'Jan/26', 'Fev/26', 'Mar/26'],
+    datasets: [{
+      label: 'Conversas',
+      data: [237, 558, 1300, 1144, 1045, 1086],
+      backgroundColor: [
+        COLORS.blue+'0.5)', COLORS.blue+'0.5)', COLORS.blue+'0.8)',
+        COLORS.green+'0.7)', COLORS.green+'0.7)', COLORS.green+'0.9)'
+      ],
+      borderColor: [
+        COLORS.blue+'1)', COLORS.blue+'1)', COLORS.blue+'1)',
+        COLORS.green+'1)', COLORS.green+'1)', COLORS.green+'1)'
+      ],
+      borderWidth: 1, borderRadius: 6
+    }]
+  },
+  options: {
+    ...defaults,
+    plugins: { ...defaults.plugins, legend: { display: false } },
+    scales: defaults.scales
+  }
+});
+
+// Status donut
+new Chart(document.getElementById('chart-status'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Resolvidas', 'Adiadas (Snoozed)', 'Abertas'],
+    datasets: [{
+      data: [5187, 178, 5],
+      backgroundColor: [COLORS.green+'0.8)', COLORS.yellow+'0.8)', COLORS.red+'0.8)'],
+      borderColor: [COLORS.green+'1)', COLORS.yellow+'1)', COLORS.red+'1)'],
+      borderWidth: 2
+    }]
+  },
+  options: {
+    plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', padding: 12, font: {size:11} } } },
+    cutout: '68%'
+  }
+});
+
+// Volume agente (overview)
+new Chart(document.getElementById('chart-agente-volume'), {
+  type: 'bar',
+  data: {
+    labels: ['Micaelly', 'Henrique', 'Vinícius', 'Júlio', 'Não atrib.', 'Carlos', 'Sistema RAM'],
+    datasets: [{
+      label: 'Conversas',
+      data: [1844, 1252, 1203, 695, 354, 15, 6],
+      backgroundColor: barColors([1,2,3,4,5,6,7], '0.8'),
+      borderRadius: 6
+    }]
+  },
+  options: {
+    ...defaults,
+    plugins: { ...defaults.plugins, legend: { display: false } },
+    scales: defaults.scales
+  }
+});
+
+// Tipo de mensagens donut
+new Chart(document.getElementById('chart-msg-tipo'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Enviadas (agente)', 'Recebidas (cliente)', 'Atividade/Sistema', 'Template'],
+    datasets: [{
+      data: [58257, 47359, 27011, 7462],
+      backgroundColor: [COLORS.blue+'0.8)', COLORS.green+'0.8)', COLORS.gray+'0.6)', COLORS.purple+'0.8)'],
+      borderWidth: 2
+    }]
+  },
+  options: {
+    plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', padding: 10, font: {size:10} } } },
+    cutout: '60%'
+  }
+});
+
+// ══════════════════ GRÁFICOS AGENTES ══════════════════
+
+new Chart(document.getElementById('chart-agente-bar'), {
+  type: 'bar',
+  data: {
+    labels: agentes,
+    datasets: [{
+      label: 'Conversas',
+      data: [1844, 1252, 1203, 695, 15],
+      backgroundColor: barColors(agentes, '0.8'),
+      borderRadius: 6
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    plugins: { ...defaults.plugins, legend: { display: false } },
+    scales: { x: defaults.scales.x, y: defaults.scales.y }
+  }
+});
+
+new Chart(document.getElementById('chart-tmr'), {
+  type: 'bar',
+  data: {
+    labels: agentes,
+    datasets: [
+      {
+        label: 'TMR Real (h)',
+        data: [18.1, 35.0, 44.1, 12.7, 19.2],
+        backgroundColor: [
+          COLORS.yellow+'0.8)', COLORS.red+'0.8)', COLORS.red+'0.8)',
+          COLORS.green+'0.8)', COLORS.yellow+'0.8)'
+        ],
+        borderRadius: 6
+      },
+      {
+        label: 'Meta (24h)',
+        data: [24, 24, 24, 24, 24],
+        type: 'line',
+        borderColor: COLORS.blue+'1)',
+        borderDash: [6, 3],
+        borderWidth: 2,
+        pointRadius: 0,
+        fill: false
+      }
+    ]
+  },
+  options: {
+    indexAxis: 'y',
+    plugins: { ...defaults.plugins, legend: { labels: { color: '#94a3b8', font: {size:11} } } },
+    scales: { x: defaults.scales.x, y: defaults.scales.y }
+  }
+});
+
+new Chart(document.getElementById('chart-tfr'), {
+  type: 'bar',
+  data: {
+    labels: ['Júlio', 'Micaelly', 'Carlos', 'Henrique', 'Vinícius'],
+    datasets: [
+      {
+        label: 'TFR Real (min)',
+        data: [0.1, 0.1, 0.1, 14.3, 22.9],
+        backgroundColor: [
+          COLORS.green+'0.8)', COLORS.green+'0.8)', COLORS.green+'0.8)',
+          COLORS.yellow+'0.8)', COLORS.orange+'0.8)'
+        ],
+        borderRadius: 6
+      },
+      {
+        label: 'Meta (30min)',
+        data: [30, 30, 30, 30, 30],
+        type: 'line',
+        borderColor: COLORS.blue+'1)',
+        borderDash: [6, 3],
+        borderWidth: 2,
+        pointRadius: 0,
+        fill: false
+      }
+    ]
+  },
+  options: {
+    plugins: { ...defaults.plugins },
+    scales: defaults.scales
+  }
+});
+
+new Chart(document.getElementById('chart-csat-agente'), {
+  type: 'bar',
+  data: {
+    labels: ['Vinícius', 'Micaelly', 'Henrique', 'Júlio'],
+    datasets: [{
+      label: 'CSAT Médio',
+      data: [4.89, 4.81, 4.79, 4.75],
+      backgroundColor: [COLORS.green+'0.8)', COLORS.green+'0.7)', COLORS.green+'0.7)', COLORS.yellow+'0.7)'],
+      borderRadius: 6
+    }]
+  },
+  options: {
+    plugins: { ...defaults.plugins, legend: { display: false } },
+    scales: {
+      x: defaults.scales.x,
+      y: { ...defaults.scales.y, min: 4.5, max: 5.0 }
+    }
+  }
+});
+
+// ══════════════════ GRÁFICOS CSAT ══════════════════
+
+new Chart(document.getElementById('chart-csat-dist'), {
+  type: 'bar',
+  data: {
+    labels: ['⭐ 1 Estrela', '⭐⭐ 2 Estrelas', '⭐⭐⭐ 3 Estrelas', '⭐⭐⭐⭐ 4 Estrelas', '⭐⭐⭐⭐⭐ 5 Estrelas'],
+    datasets: [{
+      label: 'Avaliações',
+      data: [14, 1, 4, 5, 390],
+      backgroundColor: [
+        COLORS.red+'0.8)', COLORS.orange+'0.8)', COLORS.yellow+'0.8)',
+        COLORS.teal+'0.8)', COLORS.green+'0.9)'
+      ],
+      borderRadius: 6
+    }]
+  },
+  options: {
+    plugins: { ...defaults.plugins, legend: { display: false } },
+    scales: defaults.scales
+  }
+});
+
+new Chart(document.getElementById('chart-csat-mes'), {
+  type: 'line',
+  data: {
+    labels: ['Out/25', 'Nov/25', 'Dez/25', 'Jan/26', 'Fev/26', 'Mar/26'],
+    datasets: [{
+      label: 'CSAT Médio',
+      data: [5.00, 4.94, 4.84, 4.78, 4.72, 4.82],
+      borderColor: COLORS.green+'1)',
+      backgroundColor: COLORS.green+'0.1)',
+      tension: 0.4, fill: true, pointRadius: 5,
+      pointBackgroundColor: COLORS.green+'1)'
+    }]
+  },
+  options: {
+    plugins: { ...defaults.plugins },
+    scales: {
+      x: defaults.scales.x,
+      y: { ...defaults.scales.y, min: 4.5, max: 5.1 }
+    }
+  }
+});
+
+new Chart(document.getElementById('chart-csat-agente2'), {
+  type: 'bar',
+  data: {
+    labels: ['Vinícius\n(133 resp)', 'Micaelly\n(104 resp)', 'Henrique\n(126 resp)', 'Júlio\n(32 resp)'],
+    datasets: [{
+      label: 'CSAT Médio',
+      data: [4.89, 4.81, 4.79, 4.75],
+      backgroundColor: barColors([1,2,3,4], '0.8'),
+      borderRadius: 8
+    }]
+  },
+  options: {
+    plugins: { ...defaults.plugins, legend: { display: false } },
+    scales: {
+      x: defaults.scales.x,
+      y: { ...defaults.scales.y, min: 4.5, max: 5.0 }
+    }
+  }
+});
+
+new Chart(document.getElementById('chart-csat-neg'), {
+  type: 'doughnut',
+  data: {
+    labels: ['1 Estrela (14)', '3 Estrelas (4)', '4 Estrelas (5)', '2 Estrelas (1)'],
+    datasets: [{
+      data: [14, 4, 5, 1],
+      backgroundColor: [COLORS.red+'0.9)', COLORS.yellow+'0.8)', COLORS.teal+'0.7)', COLORS.orange+'0.8)'],
+      borderWidth: 2
+    }]
+  },
+  options: {
+    plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: {size:10}, padding: 10 } } },
+    cutout: '55%'
+  }
+});
+
+// ══════════════════ GRÁFICOS CATEGORIAS ══════════════════
+
+new Chart(document.getElementById('chart-labels'), {
+  type: 'bar',
+  data: {
+    labels: [
+      'inatividade','backup-da-base','xml','aguardando-retorno','financeiro',
+      'sem-relação-sistema','orçamento-pedidos','cliente-resolveu','nota-fiscal',
+      'lead','licença','boleto','relatórios','ts-nuvem','certificado'
+    ],
+    datasets: [{
+      label: 'Conversas',
+      data: [1005, 737, 316, 210, 111, 86, 84, 72, 61, 60, 60, 59, 56, 54, 53],
+      backgroundColor: barColors(Array(15).fill(0), '0.8'),
+      borderRadius: 4
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    plugins: { ...defaults.plugins, legend: { display: false } },
+    scales: { x: defaults.scales.x, y: { ...defaults.scales.y, ticks: { ...defaults.scales.y.ticks, font: {size:10} } } }
+  }
+});
+
+new Chart(document.getElementById('chart-grupos'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Inatividade/Backup', 'Fiscal/XML/NF', 'Financeiro/Boleto', 'Orçamento/Pedidos', 'Suporte Técnico', 'Outros'],
+    datasets: [{
+      data: [1742, 377, 170, 132, 108, 171],
+      backgroundColor: [
+        COLORS.blue+'0.85)', COLORS.green+'0.85)', COLORS.yellow+'0.85)',
+        COLORS.purple+'0.85)', COLORS.orange+'0.85)', COLORS.gray+'0.6)'
+      ],
+      borderWidth: 2
+    }]
+  },
+  options: {
+    plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: {size:10}, padding: 8 } } },
+    cutout: '50%'
+  }
+});
+
+// ══════════════════ GRÁFICOS PADRÕES ══════════════════
+
+new Chart(document.getElementById('chart-hora'), {
+  type: 'line',
+  data: {
+    labels: ['0h','1h','2h','3h','4h','5h','6h','7h','8h','9h','10h','11h','12h','13h','14h','15h','16h','17h','18h','19h','20h','21h','22h','23h'],
+    datasets: [{
+      label: 'Conversas',
+      data: [11,2,5,0,2,1,0,0,1,7,107,749,830,761,592,318,370,537,466,458,107,32,7,7],
+      borderColor: COLORS.blue+'1)',
+      backgroundColor: COLORS.blue+'0.15)',
+      tension: 0.4, fill: true, pointRadius: 3,
+      pointBackgroundColor: COLORS.blue+'1)'
+    }]
+  },
+  options: {
+    plugins: { ...defaults.plugins, legend: { display: false } },
+    scales: defaults.scales
+  }
+});
+
+new Chart(document.getElementById('chart-dia-semana'), {
+  type: 'bar',
+  data: {
+    labels: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
+    datasets: [{
+      label: 'Conversas',
+      data: [19, 1058, 1111, 1124, 1043, 981, 34],
+      backgroundColor: [
+        COLORS.gray+'0.5)', COLORS.blue+'0.8)', COLORS.blue+'0.9)', COLORS.blue+'1)',
+        COLORS.blue+'0.85)', COLORS.blue+'0.75)', COLORS.gray+'0.5)'
+      ],
+      borderRadius: 6
+    }]
+  },
+  options: {
+    plugins: { ...defaults.plugins, legend: { display: false } },
+    scales: defaults.scales
+  }
+});
+
+new Chart(document.getElementById('chart-crescimento'), {
+  type: 'line',
+  data: {
+    labels: ['Out/25', 'Nov/25', 'Dez/25', 'Jan/26', 'Fev/26', 'Mar/26'],
+    datasets: [
+      {
+        label: 'Conversas',
+        data: [237, 558, 1300, 1144, 1045, 1086],
+        borderColor: COLORS.blue+'1)',
+        backgroundColor: COLORS.blue+'0.15)',
+        tension: 0.3, fill: true, pointRadius: 6,
+        pointBackgroundColor: COLORS.blue+'1)'
+      },
+      {
+        label: 'CSAT (x200)',
+        data: [1000, 988, 968, 956, 944, 964],
+        borderColor: COLORS.green+'0.8)',
+        borderDash: [6, 3],
+        tension: 0.3, fill: false, pointRadius: 4,
+        pointBackgroundColor: COLORS.green+'1)'
+      }
+    ]
+  },
+  options: {
+    plugins: { ...defaults.plugins },
+    scales: defaults.scales
+  }
+});
+
+new Chart(document.getElementById('chart-msgs'), {
+  type: 'bar',
+  data: {
+    labels: ['Enviadas\n(Agente)', 'Recebidas\n(Cliente)', 'Sistema', 'Template'],
+    datasets: [{
+      label: 'Mensagens',
+      data: [58257, 47359, 27011, 7462],
+      backgroundColor: [COLORS.blue+'0.8)', COLORS.green+'0.8)', COLORS.gray+'0.5)', COLORS.purple+'0.8)'],
+      borderRadius: 8
+    }]
+  },
+  options: {
+    plugins: { ...defaults.plugins, legend: { display: false } },
+    scales: defaults.scales
+  }
+});
+
+new Chart(document.getElementById('chart-inboxes'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Sistema RAM (API)', 'RAMPro (API)'],
+    datasets: [{
+      data: [5353, 17],
+      backgroundColor: [COLORS.blue+'0.85)', COLORS.purple+'0.85)'],
+      borderWidth: 2
+    }]
+  },
+  options: {
+    plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: {size:11}, padding: 12 } } },
+    cutout: '60%'
+  }
+});
+
+// ══════════════════ GRÁFICOS SLA ══════════════════
+
+new Chart(document.getElementById('chart-sla-tmr'), {
+  type: 'bar',
+  data: {
+    labels: ['Júlio', 'Micaelly', 'Carlos', 'Henrique', 'Vinícius'],
+    datasets: [
+      {
+        label: 'TMR Real (horas)',
+        data: [12.7, 18.1, 19.2, 35.0, 44.1],
+        backgroundColor: [
+          COLORS.green+'0.9)', COLORS.yellow+'0.8)', COLORS.yellow+'0.8)',
+          COLORS.red+'0.8)', COLORS.red+'0.9)'
+        ],
+        borderRadius: 6
+      },
+      {
+        label: 'Meta SLA (24h)',
+        data: [24, 24, 24, 24, 24],
+        type: 'line',
+        borderColor: COLORS.blue+'1)',
+        borderDash: [8, 4],
+        borderWidth: 2,
+        pointRadius: 0,
+        fill: false
+      }
+    ]
+  },
+  options: {
+    plugins: { ...defaults.plugins },
+    scales: defaults.scales
+  }
+});
+
+new Chart(document.getElementById('chart-sla-tfr'), {
+  type: 'bar',
+  data: {
+    labels: ['Júlio', 'Micaelly', 'Carlos', 'Henrique', 'Vinícius'],
+    datasets: [
+      {
+        label: 'TFR Real (min)',
+        data: [0.1, 0.1, 0.1, 14.3, 22.9],
+        backgroundColor: [
+          COLORS.green+'0.9)', COLORS.green+'0.9)', COLORS.green+'0.9)',
+          COLORS.yellow+'0.8)', COLORS.orange+'0.8)'
+        ],
+        borderRadius: 6
+      },
+      {
+        label: 'Meta SLA (30min)',
+        data: [30, 30, 30, 30, 30],
+        type: 'line',
+        borderColor: COLORS.red+'1)',
+        borderDash: [8, 4],
+        borderWidth: 2,
+        pointRadius: 0,
+        fill: false
+      }
+    ]
+  },
+  options: {
+    plugins: { ...defaults.plugins },
+    scales: defaults.scales
+  }
+});
+</script>
+
+</body>
+</html>

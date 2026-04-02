@@ -22,6 +22,23 @@ DB_CONFIG = {
 
 OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
 
+# Filtro para excluir conversas com label 'finalizar-silencioso' de todas as análises
+EXCLUIR_LABEL = "finalizar-silencioso"
+
+# Condição SQL reutilizável para excluir a label em tabelas com cached_label_list
+# Usar com alias da tabela conversations: ex. _FILTRO_LABEL.format(alias='c')
+_FILTRO_LABEL = (
+    "NOT ('{label}' = ANY(string_to_array(COALESCE({{alias}}.cached_label_list, ''), ',')))"
+    .format(label=EXCLUIR_LABEL)
+)
+
+
+def filtro_label(alias=""):
+    """Retorna cláusula SQL para excluir conversas com EXCLUIR_LABEL.
+    alias: prefixo de tabela (ex: 'c', 'co'). Se vazio, sem prefixo."""
+    col = f"{alias}.cached_label_list" if alias else "cached_label_list"
+    return f"NOT ('{EXCLUIR_LABEL}' = ANY(string_to_array(COALESCE({col}, ''), ',')))"
+
 
 def connect():
     return psycopg2.connect(**DB_CONFIG)
@@ -48,17 +65,19 @@ def extract_all():
     cur = conn.cursor()
     data = {}
     print("[OK] Conectado ao banco chatwoot_production")
+    print(f"[INFO] Excluindo conversas com label '{EXCLUIR_LABEL}' de todas as análises")
 
     # ── 1. Dados diarios por agente (filtro principal) ──────────────────────
     print("> Extraindo dados diarios por agente...")
-    rows = fetchall(cur, """
+    rows = fetchall(cur, f"""
         SELECT TO_CHAR(c.created_at, 'YYYY-MM-DD') as dia,
                COALESCE(u.name, 'Nao atribuido') as agente,
                COUNT(*) as total,
                SUM(CASE WHEN c.status=1 THEN 1 ELSE 0 END) as resolvidas
         FROM conversations c
         LEFT JOIN users u ON c.assignee_id=u.id
-        WHERE c.assignee_id IS NULL OR c.assignee_id != 1
+        WHERE (c.assignee_id IS NULL OR c.assignee_id != 1)
+          AND {filtro_label('c')}
         GROUP BY dia, agente ORDER BY dia
     """, "dados_diarios_agente")
     data["por_dia_agente"] = [
@@ -67,13 +86,15 @@ def extract_all():
 
     # ── 2. Dados diarios CSAT ───────────────────────────────────────────────
     print("> Extraindo CSAT diario...")
-    rows = fetchall(cur, """
+    rows = fetchall(cur, f"""
         SELECT TO_CHAR(cs.created_at, 'YYYY-MM-DD') as dia,
                COALESCE(u.name, 'N/A') as agente,
                ROUND(AVG(cs.rating)::numeric,2) as media,
                COUNT(*) as total
         FROM csat_survey_responses cs
         LEFT JOIN users u ON cs.assigned_agent_id=u.id
+        LEFT JOIN conversations co ON co.id = cs.conversation_id
+        WHERE {filtro_label('co')}
         GROUP BY dia, agente ORDER BY dia
     """, "csat_diario")
     data["csat_por_dia"] = [
@@ -81,15 +102,19 @@ def extract_all():
     ]
 
     # Distribuicao de ratings (estatica)
-    rows = fetchall(cur,
-        "SELECT rating, COUNT(*) FROM csat_survey_responses GROUP BY rating ORDER BY rating",
-        "csat_distribuicao")
+    rows = fetchall(cur, f"""
+        SELECT cs.rating, COUNT(*)
+        FROM csat_survey_responses cs
+        LEFT JOIN conversations co ON co.id = cs.conversation_id
+        WHERE {filtro_label('co')}
+        GROUP BY cs.rating ORDER BY cs.rating
+    """, "csat_distribuicao")
     data["csat_dist"] = [{"r": r[0], "t": r[1]} for r in rows]
 
     # ── 3a. TMR (conversation_resolved) — via reporting_events ─────────────
     # TMR é confiável em reporting_events pois resolução sempre tem user_id humano.
     print("> Extraindo TMR diario (reporting_events)...")
-    rows_tmr = fetchall(cur, """
+    rows_tmr = fetchall(cur, f"""
         SELECT TO_CHAR(re.created_at, 'YYYY-MM-DD') as dia,
                COALESCE(u.name, 'N/A') as agente,
                re.name as evento,
@@ -97,8 +122,10 @@ def extract_all():
                COUNT(*) as total
         FROM reporting_events re
         LEFT JOIN users u ON re.user_id=u.id
+        LEFT JOIN conversations co ON co.id = re.conversation_id
         WHERE re.name = 'conversation_resolved'
           AND (re.user_id IS NULL OR re.user_id != 1)
+          AND {filtro_label('co')}
         GROUP BY dia, agente, re.name ORDER BY dia
     """, "tmr_diario")
 
@@ -108,7 +135,7 @@ def extract_all():
     # Solução: buscar a primeira mensagem outgoing com sender_type='User' por
     # conversa, medindo o tempo real de resposta humana desde a criação.
     print("> Extraindo TFR diario (primeira resposta humana via messages)...")
-    rows_tfr = fetchall(cur, """
+    rows_tfr = fetchall(cur, f"""
         SELECT TO_CHAR(c.created_at, 'YYYY-MM-DD') as dia,
                COALESCE(u.name, 'N/A') as agente,
                'first_response' as evento,
@@ -127,6 +154,7 @@ def extract_all():
             LIMIT 1
         ) fh ON true
         LEFT JOIN users u ON fh.sender_id = u.id
+        WHERE {filtro_label('c')}
         GROUP BY TO_CHAR(c.created_at, 'YYYY-MM-DD'), u.name
         ORDER BY dia
     """, "tfr_diario_humano")
@@ -139,24 +167,26 @@ def extract_all():
 
     # ── 4. Labels diarios ───────────────────────────────────────────────────
     print("> Extraindo labels diarios...")
-    rows = fetchall(cur, """
+    rows = fetchall(cur, f"""
         SELECT TO_CHAR(created_at, 'YYYY-MM-DD') as dia,
                TRIM(unnest(string_to_array(cached_label_list, ','))) as label,
                COUNT(*) as total
         FROM conversations
         WHERE cached_label_list IS NOT NULL AND cached_label_list != ''
+          AND {filtro_label()}
         GROUP BY dia, label ORDER BY dia
     """, "labels_diarios")
     data["labels_por_dia"] = [{"d": r[0], "l": r[1], "t": r[2]} for r in rows]
 
     # ── 5. Hora do dia e dia da semana diarios ──────────────────────────────
     print("> Extraindo padroes horarios diarios...")
-    rows = fetchall(cur, """
+    rows = fetchall(cur, f"""
         SELECT TO_CHAR(created_at, 'YYYY-MM-DD') as dia,
                EXTRACT(HOUR FROM created_at)::int as hora,
                EXTRACT(DOW FROM created_at)::int as dow,
                COUNT(*) as total
         FROM conversations
+        WHERE {filtro_label()}
         GROUP BY dia, hora, dow ORDER BY dia
     """, "padroes_horarios")
     data["hora_dow_por_dia"] = [
@@ -164,8 +194,11 @@ def extract_all():
     ]
 
     # ── 6. Status geral (estatico) ──────────────────────────────────────────
-    rows = fetchall(cur,
-        "SELECT status, COUNT(*) FROM conversations GROUP BY status", "status_geral")
+    rows = fetchall(cur, f"""
+        SELECT status, COUNT(*) FROM conversations
+        WHERE {filtro_label()}
+        GROUP BY status
+    """, "status_geral")
     sm = {0: "open", 1: "resolved", 2: "pending", 3: "snoozed"}
     data["status_total"] = {sm.get(r[0], str(r[0])): r[1] for r in rows}
 
@@ -179,10 +212,11 @@ def extract_all():
     rows = fetchall(cur, "SELECT id, name, email FROM users ORDER BY id", "agentes")
     data["agentes"] = [{"id": r[0], "nome": r[1], "email": r[2]} for r in rows]
 
-    rows = fetchall(cur, """
+    rows = fetchall(cur, f"""
         SELECT COALESCE(t.name,'Sem equipe') as equipe, COUNT(c.id) as total
         FROM conversations c
         LEFT JOIN teams t ON c.team_id=t.id
+        WHERE {filtro_label('c')}
         GROUP BY equipe ORDER BY total DESC
     """, "conversas_por_equipe")
     data["conversas_por_equipe"] = [{"eq": r[0], "t": r[1]} for r in rows]
@@ -196,7 +230,7 @@ def extract_all():
     # ── 8. Auditoria TFR: conversas com bot como primeiro respondente ────────
     # Conta conversas onde o bot (sender_type != 'User') respondeu antes do humano.
     print("> Auditando conversas com bot respondendo primeiro...")
-    rows = fetchall(cur, """
+    rows = fetchall(cur, f"""
         SELECT COUNT(DISTINCT c.id) as total
         FROM conversations c
         JOIN LATERAL (
@@ -208,6 +242,7 @@ def extract_all():
             LIMIT 1
         ) first_msg ON true
         WHERE first_msg.sender_type != 'User'
+          AND {filtro_label('c')}
     """, "bot_first_response_audit")
     data["bot_first_response_ignorados"] = rows[0][0] if rows else 0
     if data["bot_first_response_ignorados"] > 0:
@@ -267,6 +302,7 @@ def main():
     bot_ignored = data.get("bot_first_response_ignorados", 0)
     if bot_ignored:
         print(f"   TFR bot ignorados: {bot_ignored} eventos (first_response sem user_id)")
+    print(f"   Label excluída: '{EXCLUIR_LABEL}'")
     print("\n[INFO] Execute index.html no navegador para visualizar.")
 
 
