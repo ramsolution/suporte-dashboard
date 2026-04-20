@@ -394,6 +394,26 @@
     <div class="ct">CSAT por Agente</div>
     <table class="dt" id="tca"></table>
   </div>
+  <div class="cc" style="margin-top:14px">
+    <div class="ct" style="display:flex;align-items:center;gap:12px">
+      Respostas dos Clientes
+      <span id="csat-resp-count" style="font-size:12px;font-weight:400;color:#888"></span>
+      <label style="margin-left:auto;font-size:12px;font-weight:400;display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="checkbox" id="csat-only-comments" onchange="rCsatResp()" style="cursor:pointer">
+        Só com comentário
+      </label>
+    </div>
+    <table class="dt" id="tcr">
+      <thead><tr>
+        <th>Data</th><th>Cliente</th><th>Agente</th>
+        <th>Nota</th><th>Comentário</th>
+      </tr></thead>
+      <tbody id="tcr-body"></tbody>
+    </table>
+    <div id="tcr-empty" style="display:none;padding:24px;text-align:center;color:#888;font-size:13px">
+      Nenhuma resposta no período selecionado.
+    </div>
+  </div>
 </div>
 
 <!-- ════════ CATEGORIAS ════════ -->
@@ -557,7 +577,30 @@ function fd(){
     ev:D.eventos_por_dia.filter(r=>inR(r.d)),
     lb:D.labels_por_dia.filter(r=>inR(r.d)),
     hd:D.hora_dow_por_dia.filter(r=>inR(r.d)),
+    resp:(D.csat_respostas||[]).filter(r=>inR(r.d)),
   };
+}
+let _lastResp=[];
+function rCsatResp(){
+  const onlyComments=document.getElementById('csat-only-comments')?.checked;
+  const rows=onlyComments?_lastResp.filter(r=>r.fb&&r.fb.trim()):_lastResp;
+  const stars=n=>['','★','★★','★★★','★★★★','★★★★★'][n]||n;
+  const starColor=n=>n>=4?'#1fd686':n===3?'#f5b227':'#f06060';
+  const body=document.getElementById('tcr-body');
+  const empty=document.getElementById('tcr-empty');
+  if(!rows.length){
+    if(body)body.innerHTML='';
+    if(empty)empty.style.display='block';
+    return;
+  }
+  if(empty)empty.style.display='none';
+  if(body)body.innerHTML=rows.map(r=>`<tr>
+    <td style="white-space:nowrap">${fmtD(r.d)}${r.h?' '+r.h:''}</td>
+    <td><strong>${r.ct||'—'}</strong></td>
+    <td>${r.ag||'—'}</td>
+    <td style="text-align:center;color:${starColor(r.r)};font-weight:700;font-size:15px">${stars(r.r)}</td>
+    <td style="max-width:340px;word-break:break-word">${r.fb&&r.fb.trim()?`<em style="color:#444">"${r.fb.trim()}"</em>`:'<span style="color:#bbb;font-size:12px">sem comentário</span>'}</td>
+  </tr>`).join('');
 }
 
 // ═══════ AGRUPAMENTO ═══════
@@ -757,6 +800,13 @@ function rCsat(f,g){
   document.getElementById('tca').innerHTML=`<thead><tr><th>Agente</th><th>CSAT</th><th>Avaliações</th><th>Status</th></tr></thead><tbody>`+
     cr.map(r=>`<tr><td><strong>${r.a}</strong></td><td><span class="star">★</span> ${r.m}</td><td>${r.t}</td>
     <td>${r.m>=CSAT_EXCELLENT?'<span class="bg">Excelente</span>':r.m>=CSAT_GOOD?'<span class="by">Bom</span>':'<span class="br">Atenção</span>'}</td></tr>`).join('')+`</tbody>`;
+
+  // Tabela de respostas individuais
+  _lastResp=f.resp||[];
+  const withComments=_lastResp.filter(r=>r.fb&&r.fb.trim()).length;
+  const el=document.getElementById('csat-resp-count');
+  if(el)el.textContent=`${_lastResp.length} resposta${_lastResp.length!==1?'s':''}${withComments?' · '+withComments+' com comentário':''}`;
+  rCsatResp();
 }
 
 // ── CATEGORIAS ──

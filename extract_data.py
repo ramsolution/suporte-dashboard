@@ -111,6 +111,45 @@ def extract_all():
     """, "csat_distribuicao")
     data["csat_dist"] = [{"r": r[0], "t": r[1]} for r in rows]
 
+    # ── 2b. Respostas individuais CSAT (com comentarios) ─────────────────────
+    print("> Extraindo respostas individuais CSAT...")
+    rows = fetchall(cur, f"""
+        SELECT TO_CHAR(cs.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM-DD') as dia,
+               TO_CHAR(cs.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo', 'HH24:MI') as hora,
+               COALESCE(u.name, 'N/A') as agente,
+               COALESCE(ct.name, 'Cliente') as contato,
+               cs.rating,
+               COALESCE(cs.feedback_message, '') as comentario,
+               cs.conversation_id
+        FROM csat_survey_responses cs
+        LEFT JOIN users u ON cs.assigned_agent_id = u.id
+        LEFT JOIN contacts ct ON cs.contact_id = ct.id
+        LEFT JOIN conversations co ON co.id = cs.conversation_id
+        WHERE {filtro_label('co')}
+        ORDER BY cs.created_at DESC
+    """, "csat_respostas_individuais")
+    if not rows:
+        # Fallback sem feedback_message (versoes antigas do Chatwoot)
+        rows = fetchall(cur, f"""
+            SELECT TO_CHAR(cs.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM-DD') as dia,
+                   TO_CHAR(cs.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo', 'HH24:MI') as hora,
+                   COALESCE(u.name, 'N/A') as agente,
+                   COALESCE(ct.name, 'Cliente') as contato,
+                   cs.rating,
+                   '' as comentario,
+                   cs.conversation_id
+            FROM csat_survey_responses cs
+            LEFT JOIN users u ON cs.assigned_agent_id = u.id
+            LEFT JOIN contacts ct ON cs.contact_id = ct.id
+            LEFT JOIN conversations co ON co.id = cs.conversation_id
+            WHERE {filtro_label('co')}
+            ORDER BY cs.created_at DESC
+        """, "csat_respostas_fallback")
+    data["csat_respostas"] = [
+        {"d": r[0], "h": r[1], "ag": r[2], "ct": r[3], "r": r[4], "fb": r[5], "cid": r[6]}
+        for r in rows
+    ]
+
     # ── 3a. TMR (conversation_resolved) — via reporting_events ─────────────
     # TMR é confiável em reporting_events pois resolução sempre tem user_id humano.
     print("> Extraindo TMR diario (reporting_events)...")
