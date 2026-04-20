@@ -8,7 +8,15 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-  <script src="data.js"></script>
+  <script>
+    // Cache-bust: força reload do data.js quando há nova versão
+    (function(){
+      const v = Date.now() - (Date.now() % 900000); // muda a cada 15 min (intervalo da Actions)
+      const s = document.createElement('script');
+      s.src = 'data.js?v=' + v;
+      document.write(s.outerHTML);
+    })();
+  </script>
   <style>
     :root{
       /* ── Palette ── */
