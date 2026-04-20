@@ -403,13 +403,21 @@
     <table class="dt" id="tca"></table>
   </div>
   <div class="cc" style="margin-top:14px">
-    <div class="ct" style="display:flex;align-items:center;gap:12px">
+    <div class="ct" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
       Respostas dos Clientes
       <span id="csat-resp-count" style="font-size:12px;font-weight:400;color:#888"></span>
-      <label style="margin-left:auto;font-size:12px;font-weight:400;display:flex;align-items:center;gap:6px;cursor:pointer">
-        <input type="checkbox" id="csat-only-comments" onchange="rCsatResp()" style="cursor:pointer">
-        Só com comentário
-      </label>
+      <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-wrap:wrap">
+        <select id="csat-filter-agente" onchange="rCsatResp()" style="background:#111520;color:#c8d0e7;border:1px solid #2a3058;border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer">
+          <option value="">Todos os agentes</option>
+        </select>
+        <select id="csat-filter-cliente" onchange="rCsatResp()" style="background:#111520;color:#c8d0e7;border:1px solid #2a3058;border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer">
+          <option value="">Todos os clientes</option>
+        </select>
+        <label style="font-size:12px;font-weight:400;display:flex;align-items:center;gap:6px;cursor:pointer">
+          <input type="checkbox" id="csat-only-comments" onchange="rCsatResp()" style="cursor:pointer">
+          Só com comentário
+        </label>
+      </div>
     </div>
     <table class="dt" id="tcr">
       <thead><tr>
@@ -589,9 +597,20 @@ function fd(){
   };
 }
 let _lastResp=[];
+function _populateSelect(id,values,current){
+  const sel=document.getElementById(id);if(!sel)return;
+  const first=sel.options[0];
+  sel.innerHTML='';sel.appendChild(first);
+  values.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;if(v===current)o.selected=true;sel.appendChild(o)});
+}
 function rCsatResp(){
   const onlyComments=document.getElementById('csat-only-comments')?.checked;
-  const rows=onlyComments?_lastResp.filter(r=>r.fb&&r.fb.trim()):_lastResp;
+  const selAg=document.getElementById('csat-filter-agente')?.value||'';
+  const selCt=document.getElementById('csat-filter-cliente')?.value||'';
+  let rows=_lastResp;
+  if(selAg)rows=rows.filter(r=>r.ag===selAg);
+  if(selCt)rows=rows.filter(r=>r.ct===selCt);
+  if(onlyComments)rows=rows.filter(r=>r.fb&&r.fb.trim());
   const stars=n=>['','★','★★','★★★','★★★★','★★★★★'][n]||n;
   const starColor=n=>n>=4?'#1fd686':n===3?'#f5b227':'#f06060';
   const body=document.getElementById('tcr-body');
@@ -607,7 +626,7 @@ function rCsatResp(){
     <td><strong>${r.ct||'—'}</strong></td>
     <td>${r.ag||'—'}</td>
     <td style="text-align:center;color:${starColor(r.r)};font-weight:700;font-size:15px">${stars(r.r)}</td>
-    <td style="max-width:340px;word-break:break-word">${r.fb&&r.fb.trim()?`<em style="color:#444">"${r.fb.trim()}"</em>`:'<span style="color:#bbb;font-size:12px">sem comentário</span>'}</td>
+    <td style="max-width:340px;word-break:break-word">${r.fb&&r.fb.trim()?`<em style="color:#e2e8f8">"${r.fb.trim()}"</em>`:'<span style="color:#bbb;font-size:12px">sem comentário</span>'}</td>
   </tr>`).join('');
 }
 
@@ -814,6 +833,11 @@ function rCsat(f,g){
   const withComments=_lastResp.filter(r=>r.fb&&r.fb.trim()).length;
   const el=document.getElementById('csat-resp-count');
   if(el)el.textContent=`${_lastResp.length} resposta${_lastResp.length!==1?'s':''}${withComments?' · '+withComments+' com comentário':''}`;
+  // Popula selects de agente e cliente preservando seleção atual
+  const agentes=[...new Set(_lastResp.map(r=>r.ag).filter(Boolean))].sort();
+  const clientes=[...new Set(_lastResp.map(r=>r.ct).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  _populateSelect('csat-filter-agente',agentes,document.getElementById('csat-filter-agente')?.value);
+  _populateSelect('csat-filter-cliente',clientes,document.getElementById('csat-filter-cliente')?.value);
   rCsatResp();
 }
 
